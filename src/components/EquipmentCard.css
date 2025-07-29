@@ -1,0 +1,96 @@
+.card {
+  border: none;
+  border-radius: 12px;
+  padding: 24px 20px 18px 20px;
+  margin: 18px 12px;
+  width: 340px;
+  display: inline-block;
+  vertical-align: top;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+.card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1a237e;
+  letter-spacing: 0.01em;
+}
+
+.card-text {
+  margin-bottom: 0.25rem;
+  color: #444;
+  font-size: 1rem;
+}
+
+.card-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.card-buttons button {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.card-buttons button:nth-child(1) {
+  background: #1976d2;
+  color: #fff;
+}
+.card-buttons button:nth-child(1):hover,
+.card-buttons button:nth-child(1):focus {
+  background: #1565c0;
+}
+
+.card-buttons button:nth-child(2) {
+  background: #fff;
+  color: #d32f2f;
+  border: 1.5px solid #d32f2f;
+}
+.card-buttons button:nth-child(2):hover,
+.card-buttons button:nth-child(2):focus {
+  background: #ffebee;
+}
+
+.card-buttons button:nth-child(3) {
+  background: #fff;
+  color: #1976d2;
+  border: 1.5px solid #1976d2;
+}
+.card-buttons button:nth-child(3):hover,
+.card-buttons button:nth-child(3):focus {
+  background: #e3f2fd;
+}
+
+.card-buttons button:nth-child(4) {
+  background: #fbc02d;
+  color: #fff;
+}
+.card-buttons button:nth-child(4):hover,
+.card-buttons button:nth-child(4):focus {
+  background: #f9a825;
+}
+
+.card-buttons button:focus {
+  box-shadow: 0 0 0 2px #1976d233;
+}
