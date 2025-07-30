@@ -1,18 +1,53 @@
 import React from 'react';
+import useStore from '../store';
 import './Sidebar.css';
 
-function Sidebar({ setView, toggleSidebar, isSidebarOpen }) {
+const Sidebar = React.memo(function Sidebar({ toggleSidebar, isSidebarOpen }) {
+  const { view, setView } = useStore();
+
   return (
-    <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
-      <button onClick={toggleSidebar} className="toggle-button">
+    <nav
+      className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}
+      aria-label="Main navigation"
+      role="navigation"
+    >
+      <button
+        onClick={toggleSidebar}
+        className="toggle-button"
+        aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+      >
         {isSidebarOpen ? '<' : '>'}
       </button>
-      <ul>
-        <li onClick={() => setView('equipment')}>Equipment</li>
-        <li onClick={() => setView('dashboard')}>Dashboard</li>
+      <ul role="menu">
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('equipment')}
+            className={view === 'equipment' ? 'active' : ''}
+            aria-current={view === 'equipment' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Equipment">🛠️</span>
+            <span>Equipment</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('dashboard')}
+            className={view === 'dashboard' ? 'active' : ''}
+            aria-current={view === 'dashboard' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Dashboard">📊</span>
+            <span>Dashboard</span>
+          </button>
+        </li>
       </ul>
-    </div>
+    </nav>
   );
-}
+});
 
 export default Sidebar;

@@ -1,25 +1,51 @@
 .App {
   display: flex;
+  height: 100vh;
 }
 
 .main-content {
   flex-grow: 1;
-  padding: 20px;
-  margin-left: 200px;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.main-content.closed {
-  margin-left: 60px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .App-header {
   background-color: #282c34;
-  min-height: 10vh;
+  min-height: 64px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding: 0 2rem;
+  box-shadow: 0 2px 8px rgba(40,44,52,0.08);
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .App-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 1rem;
+    font-size: 1.1rem;
+    min-height: 48px;
+  }
+}
+
+/* Dark mode styles */
+.App.dark {
+  background-color: #181a20;
+  color: #e0e0e0;
+}
+
+.App.dark .main-content {
+  background-color: #23272f;
+  color: #e0e0e0;
+}
+
+.App.dark .App-header {
+  background-color: #23272f;
+  color: #ffe082;
 }

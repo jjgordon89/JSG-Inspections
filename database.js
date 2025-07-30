@@ -17,13 +17,16 @@ db.serialize(() => {
   // Create equipment table
   db.run(`CREATE TABLE IF NOT EXISTS equipment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    equipment_id TEXT UNIQUE,
+    type TEXT,
     manufacturer TEXT,
     model TEXT,
     serial_number TEXT,
     capacity REAL,
     installation_date TEXT,
     location TEXT,
-    status TEXT
+    status TEXT,
+    qr_code_data TEXT
   )`);
 
   // Create inspections table

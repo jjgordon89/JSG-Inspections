@@ -40,3 +40,23 @@ form button[type="button"] {
 form button[type="button"]:hover {
   background-color: #5a6268;
 }
+
+.qr-button {
+  background-color: #ffc107;
+  color: black;
+}
+
+.qr-button:hover {
+  background-color: #e0a800;
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.qr-code-container img {
+  width: 150px;
+  height: 150px;
+}

@@ -35,6 +35,31 @@
   font-size: 1rem;
 }
 
+.card-text strong {
+  font-weight: 600;
+  color: #1a237e;
+}
+
+.status {
+  padding: 0.2em 0.6em;
+  border-radius: 0.25em;
+  color: #fff;
+  font-weight: 600;
+}
+
+.status-active {
+  background-color: #28a745;
+}
+
+.status-out-of-service {
+  background-color: #dc3545;
+}
+
+.status-under-maintenance {
+  background-color: #ffc107;
+  color: #000;
+}
+
 .card-buttons {
   display: flex;
   justify-content: flex-end;
@@ -93,4 +118,22 @@
 
 .card-buttons button:focus {
   box-shadow: 0 0 0 2px #1976d233;
+}
+
+.inspect-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.inspect-button:hover {
+  background-color: #218838;
+}
+
+.scan-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.scan-button:hover {
+  background-color: #0056b3;
 }
