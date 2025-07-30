@@ -130,7 +130,6 @@ function App() {
           )}
           {inspectingEquipment && (
             <InspectionForm
-              equipment={inspectingEquipment}
               onInspectionAdded={handleInspectionComplete}
               onCancel={() => {
                 setInspectingEquipment(null);
@@ -151,7 +150,6 @@ function App() {
           {addingInspectionFor && (
             <Modal onClose={handleCancelAddInspection}>
               <InspectionForm
-                equipment={typeof addingInspectionFor === 'object' ? addingInspectionFor : { id: addingInspectionFor, type: '' }}
                 onInspectionAdded={handleInspectionAdded}
                 onCancel={handleCancelAddInspection}
                 showToast={showToast}

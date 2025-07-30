@@ -4,8 +4,16 @@ import Modal from './Modal';
 import PhotoAnnotation from './PhotoAnnotation';
 import InspectionSummary from './InspectionSummary';
 import { getChecklistForEquipment } from '../utils/checklists';
+import { useEquipmentStore, useInspectionStore } from '../store';
 
-function InspectionForm({ equipment, onInspectionAdded, onCancel }) {
+function InspectionForm({ onInspectionAdded, onCancel, showToast }) {
+  // Get equipment from either equipmentStore or inspectionStore
+  const inspectingEquipment = useEquipmentStore((state) => state.inspectingEquipment);
+  const addingInspectionFor = useInspectionStore((state) => state.addingInspectionFor);
+  
+  // Determine which equipment to use
+  const equipment = inspectingEquipment ||
+    (typeof addingInspectionFor === 'object' ? addingInspectionFor : { id: addingInspectionFor, type: '' });
   const [sections, setSections] = useState([]);
   const [showSummary, setShowSummary] = useState(false);
   const [annotatingPhoto, setAnnotatingPhoto] = useState(null);
