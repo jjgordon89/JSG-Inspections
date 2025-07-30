@@ -2,125 +2,94 @@ import React, { useState } from 'react';
 import './AddEquipmentForm.css';
 import { generateQrCode } from '../utils/qr';
 
+const initialState = {
+  equipmentId: '',
+  type: 'Overhead Crane',
+  manufacturer: '',
+  model: '',
+  serialNumber: '',
+  capacity: '',
+  installationDate: '',
+  location: '',
+  status: 'active',
+  files: [],
+  qrCodeData: '',
+};
+
 function AddEquipmentForm({ onEquipmentAdded }) {
-  const [equipmentId, setEquipmentId] = useState('');
-  const [type, setType] = useState('Overhead Crane');
-  const [manufacturer, setManufacturer] = useState('');
-  const [model, setModel] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [installationDate, setInstallationDate] = useState('');
-  const [location, setLocation] = useState('');
-  const [status, setStatus] = useState('active');
-  const [files, setFiles] = useState([]);
-  const [qrCodeData, setQrCodeData] = useState('');
+  const [formData, setFormData] = useState(initialState);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleFileChange = (e) => {
-    setFiles(e.target.files);
+    setFormData(prev => ({ ...prev, files: e.target.files }));
   };
 
   const handleAssociateQrCode = async () => {
-    if (!equipmentId) {
+    if (!formData.equipmentId) {
       alert('Please enter an Equipment ID first.');
       return;
     }
-    const qrCode = await generateQrCode(equipmentId);
-    setQrCodeData(qrCode);
+    const qrCode = await generateQrCode(formData.equipmentId);
+    setFormData(prev => ({ ...prev, qrCodeData: qrCode }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newEquipmentId = await window.api.run(
+    const { files, ...equipmentData } = formData;
+    const newEquipment = await window.api.run(
       'INSERT INTO equipment (equipment_id, type, manufacturer, model, serial_number, capacity, installation_date, location, status, qr_code_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [equipmentId, type, manufacturer, model, serialNumber, capacity, installationDate, location, status, qrCodeData]
+      Object.values(equipmentData)
     );
 
     for (const file of files) {
       await window.api.run(
         'INSERT INTO documents (equipment_id, file_name, file_path) VALUES (?, ?, ?)',
-        [newEquipmentId.id, file.name, file.path]
+        [newEquipment.id, file.name, file.path]
       );
     }
 
     onEquipmentAdded();
-    setEquipmentId('');
-    setType('Overhead Crane');
-    setManufacturer('');
-    setModel('');
-    setSerialNumber('');
-    setCapacity('');
-    setInstallationDate('');
-    setLocation('');
-    setStatus('active');
-    setFiles([]);
-    setQrCodeData('');
+    setFormData(initialState);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="add-equipment-form">
       <h3>Add New Equipment</h3>
-      <input
-        type="text"
-        value={equipmentId}
-        onChange={(e) => setEquipmentId(e.target.value)}
-        placeholder="Equipment ID"
-        required
-      />
-      <select value={type} onChange={(e) => setType(e.target.value)}>
-        <option value="Overhead Crane">Overhead Crane</option>
-        <option value="Gantry Crane">Gantry Crane</option>
-        <option value="Jib">Jib</option>
-        <option value="Monorail">Monorail</option>
-        <option value="Hoist">Hoist</option>
-      </select>
-      <input
-        type="text"
-        value={manufacturer}
-        onChange={(e) => setManufacturer(e.target.value)}
-        placeholder="Manufacturer"
-      />
-      <input
-        type="text"
-        value={model}
-        onChange={(e) => setModel(e.target.value)}
-        placeholder="Model"
-      />
-      <input
-        type="text"
-        value={serialNumber}
-        onChange={(e) => setSerialNumber(e.target.value)}
-        placeholder="Serial Number"
-      />
-      <input
-        type="number"
-        value={capacity}
-        onChange={(e) => setCapacity(e.target.value)}
-        placeholder="Capacity"
-      />
-      <input
-        type="date"
-        value={installationDate}
-        onChange={(e) => setInstallationDate(e.target.value)}
-      />
-      <input
-        type="text"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-        placeholder="Location"
-      />
-      <select value={status} onChange={(e) => setStatus(e.target.value)}>
-        <option value="active">Active</option>
-        <option value="out of service">Out of Service</option>
-        <option value="under maintenance">Under Maintenance</option>
-      </select>
-      <input type="file" multiple onChange={handleFileChange} />
-      <button type="button" onClick={handleAssociateQrCode} className="qr-button">Associate QR/NFC Tag</button>
-      {qrCodeData && (
-        <div className="qr-code-container">
-          <img src={qrCodeData} alt="QR Code" />
+      <div className="form-grid">
+        <input name="equipmentId" value={formData.equipmentId} onChange={handleChange} placeholder="Equipment ID" required />
+        <select name="type" value={formData.type} onChange={handleChange}>
+          <option>Overhead Crane</option>
+          <option>Gantry Crane</option>
+          <option>Jib</option>
+          <option>Monorail</option>
+          <option>Hoist</option>
+        </select>
+        <input name="manufacturer" value={formData.manufacturer} onChange={handleChange} placeholder="Manufacturer" />
+        <input name="model" value={formData.model} onChange={handleChange} placeholder="Model" />
+        <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} placeholder="Serial Number" />
+        <input name="capacity" type="number" value={formData.capacity} onChange={handleChange} placeholder="Capacity" />
+        <input name="installationDate" type="date" value={formData.installationDate} onChange={handleChange} />
+        <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" />
+        <select name="status" value={formData.status} onChange={handleChange}>
+          <option value="active">Active</option>
+          <option value="out of service">Out of Service</option>
+          <option value="under maintenance">Under Maintenance</option>
+        </select>
+        <input type="file" multiple onChange={handleFileChange} className="form-full-width" />
+        <div className="form-buttons">
+          <button type="button" onClick={handleAssociateQrCode} className="btn-secondary">Associate QR/NFC Tag</button>
+          <button type="submit" className="btn-submit">Add Equipment</button>
         </div>
-      )}
-      <button type="submit">Add</button>
+        {formData.qrCodeData && (
+          <div className="qr-code-container">
+            <img src={formData.qrCodeData} alt="QR Code" />
+          </div>
+        )}
+      </div>
     </form>
   );
 }

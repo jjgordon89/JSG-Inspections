@@ -10,6 +10,11 @@ import InspectionList from './components/InspectionList';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import Modal from './components/Modal';
+import TemplateBuilder from './components/TemplateBuilder';
+import Scheduler from './components/Scheduler';
+import ReportGenerator from './components/ReportGenerator';
+import ComplianceManager from './components/ComplianceManager';
+import Settings from './components/Settings';
 import useStore from './store';
 
 function App() {
@@ -101,6 +106,11 @@ function App() {
         </header>
         <main>
           {view === 'dashboard' && <Dashboard />}
+          {view === 'templateBuilder' && <TemplateBuilder />}
+          {view === 'scheduler' && <Scheduler />}
+          {view === 'reporting' && <ReportGenerator />}
+          {view === 'compliance' && <ComplianceManager />}
+          {view === 'settings' && <Settings />}
           {view === 'equipment' && !inspectingEquipment && (
             <>
               <AddEquipmentForm onEquipmentAdded={handleEquipmentAdded} showToast={showToast} />

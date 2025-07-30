@@ -1,50 +1,50 @@
 .card {
-  border: none;
-  border-radius: 12px;
-  padding: 24px 20px 18px 20px;
-  margin: 18px 12px;
-  width: 340px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin: 16px;
+  padding: 20px;
+  width: 320px;
   display: inline-block;
   vertical-align: top;
-  background: #fff;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.06);
-  transition: box-shadow 0.2s cubic-bezier(.4,0,.2,1);
+  transition: all 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .card-body {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .card-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #1a237e;
-  letter-spacing: 0.01em;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
 }
 
 .card-text {
-  margin-bottom: 0.25rem;
-  color: #444;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
 }
 
 .card-text strong {
   font-weight: 600;
-  color: #1a237e;
+  color: #333;
 }
 
 .status {
-  padding: 0.2em 0.6em;
-  border-radius: 0.25em;
+  padding: 4px 8px;
+  border-radius: 4px;
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
 }
 
 .status-active {
@@ -57,83 +57,60 @@
 
 .status-under-maintenance {
   background-color: #ffc107;
-  color: #000;
+  color: #333;
 }
 
 .card-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .card-buttons button {
-  padding: 7px 16px;
-  border: none;
+  padding: 8px 12px;
+  border: 1px solid transparent;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  outline: none;
+  transition: all 0.2s ease;
 }
 
-.card-buttons button:nth-child(1) {
-  background: #1976d2;
-  color: #fff;
-}
-.card-buttons button:nth-child(1):hover,
-.card-buttons button:nth-child(1):focus {
-  background: #1565c0;
-}
-
-.card-buttons button:nth-child(2) {
-  background: #fff;
-  color: #d32f2f;
-  border: 1.5px solid #d32f2f;
-}
-.card-buttons button:nth-child(2):hover,
-.card-buttons button:nth-child(2):focus {
-  background: #ffebee;
-}
-
-.card-buttons button:nth-child(3) {
-  background: #fff;
-  color: #1976d2;
-  border: 1.5px solid #1976d2;
-}
-.card-buttons button:nth-child(3):hover,
-.card-buttons button:nth-child(3):focus {
-  background: #e3f2fd;
-}
-
-.card-buttons button:nth-child(4) {
-  background: #fbc02d;
-  color: #fff;
-}
-.card-buttons button:nth-child(4):hover,
-.card-buttons button:nth-child(4):focus {
-  background: #f9a825;
-}
-
-.card-buttons button:focus {
-  box-shadow: 0 0 0 2px #1976d233;
-}
-
-.inspect-button {
-  background-color: #28a745;
-  color: white;
-}
-
-.inspect-button:hover {
-  background-color: #218838;
-}
-
-.scan-button {
+.card-buttons .btn-primary {
   background-color: #007bff;
   color: white;
 }
 
-.scan-button:hover {
+.card-buttons .btn-primary:hover {
   background-color: #0056b3;
+}
+
+.card-buttons .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.card-buttons .btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.card-buttons .btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.card-buttons .btn-danger:hover {
+  background-color: #c82333;
+}
+
+.card-buttons .btn-outline {
+  background-color: transparent;
+  color: #007bff;
+  border-color: #007bff;
+}
+
+.card-buttons .btn-outline:hover {
+  background-color: #007bff;
+  color: white;
 }

@@ -1,0 +1,32 @@
+{
+  "Overhead Crane": {
+    "Structure": [
+      {
+        "id": "oc-s-1",
+        "text": "Inspect main girders for damage or corrosion",
+        "fieldType": "text"
+      },
+      {
+        "id": "oc-s-2",
+        "text": "Enter load test value",
+        "fieldType": "number"
+      },
+      {
+        "id": "oc-s-3",
+        "text": "Inspection date",
+        "fieldType": "date"
+      },
+      {
+        "id": "oc-s-4",
+        "text": "Select inspection outcome",
+        "fieldType": "dropdown",
+        "options": ["Pass", "Fail", "Needs Review"]
+      },
+      {
+        "id": "oc-s-5",
+        "text": "Upload inspection photo",
+        "fieldType": "file"
+      }
+    ]
+  }
+}

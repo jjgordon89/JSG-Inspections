@@ -1,228 +1,76 @@
-.inspection-form-container {
-  max-width: 800px;
+.inspection-form {
+  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #f9fafb;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 24px;
 }
 
-.inspection-header {
+.inspection-section {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 24px;
+}
+
+.section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
-  margin-bottom: 1rem;
-  text-align: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
 }
 
-.progress-indicator {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-bottom: 2rem;
-  text-align: center;
+.section-content {
+  padding: 24px;
 }
 
-.checklist-item-text {
-  font-size: 1.25rem;
-  color: #374151;
-  margin-bottom: 2rem;
-  text-align: center;
+.inspection-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.result-buttons {
+.item-text {
+  font-size: 1.1rem;
+}
+
+.item-controls {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 8px;
 }
 
 .result-btn {
-  flex: 1;
-  font-size: 1.5rem;
-  padding: 1.5rem;
-  border: none;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+}
+
+.result-btn.selected {
   color: white;
 }
 
-.result-btn.pass { background-color: #dcfce7; color: #166534; }
-.result-btn.pass.selected { background-color: #22c55e; }
+.result-btn.pass.selected { background-color: #28a745; }
+.result-btn.fail.selected { background-color: #dc3545; }
+.result-btn.na.selected { background-color: #6c757d; }
 
-.result-btn.fail { background-color: #fee2e2; color: #991b1b; }
-.result-btn.fail.selected { background-color: #ef4444; }
-
-.result-btn.na { background-color: #e0e7ff; color: #3730a3; }
-.result-btn.na.selected { background-color: #6366f1; }
-
-.photo-section, .notes-section {
-  margin-bottom: 2rem;
-}
-
-.photo-btn, .nav-btn, .submit-btn, .cancel-btn, .done-btn {
-  font-size: 1.25rem;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-}
-
-.photo-btn {
-  background-color: #3b82f6;
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.notes-textarea {
-  font-size: 1rem;
-  width: 100%;
-  min-height: 100px;
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-}
-
-.nav-buttons {
+.deficiency-details {
+  grid-column: 1 / -1;
+  background: #fff5f5;
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 12px;
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.nav-btn {
-  flex: 1;
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-.submit-btn {
-  background-color: #16a34a;
-  color: white;
-}
-
-.cancel-btn {
-  background-color: #9ca3af;
-  color: white;
-}
-
-.summary-container {
-  padding: 2rem;
-}
-
-.summary-header {
-  font-size: 1.75rem;
-  margin-bottom: 2rem;
-}
-
-.deficiency-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.done-btn {
-  background-color: #16a34a;
-  color: white;
-  margin-top: 2rem;
-}
-
-.report-header, .at-a-glance, .deficiencies-list, .summary-comments, .signature-section {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 2rem;
-}
-
-.report-header h2 {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.at-a-glance ul {
-  list-style: none;
-  padding: 0;
-}
-
-.deficiency-item .photo-gallery img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.summary-comments textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
-}
-
-.sig-canvas {
-  width: 100%;
-  height: 200px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  background-color: #fff;
-}
-
-.signature-section button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #e5e7eb;
-  color: #374151;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.fail-sub-workflow {
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-top: 2rem;
-  background-color: #fee2e2;
-}
-
-.fail-sub-workflow h4 {
-  margin-top: 0;
-  font-size: 1.25rem;
-  color: #991b1b;
-  margin-bottom: 1rem;
-}
-
-.fail-sub-workflow input,
-.fail-sub-workflow select,
-.fail-sub-workflow textarea {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-.photo-gallery {
+.form-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.photo-thumbnail-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.photo-thumbnail-btn img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }

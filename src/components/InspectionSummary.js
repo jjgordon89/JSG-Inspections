@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
+import { generateInspectionPdf } from '../utils/generatePdf';
 import './InspectionForm.css';
 
 function InspectionSummary({ checklist, onDone, equipment }) {
@@ -32,6 +33,20 @@ function InspectionSummary({ checklist, onDone, equipment }) {
     );
 
     onDone();
+  };
+
+  // Export PDF handler
+  const handleExportPdf = () => {
+    const signature = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
+    const inspectionData = {
+      equipment_id: equipment.id,
+      inspector: 'Inspector Name', // Placeholder
+      inspection_date: new Date().toISOString(),
+      findings: JSON.stringify(checklist),
+      summary_comments: summaryComments,
+      signature: signature,
+    };
+    generateInspectionPdf(inspectionData);
   };
 
   return (
@@ -93,9 +108,14 @@ function InspectionSummary({ checklist, onDone, equipment }) {
         <button onClick={() => sigCanvas.current.clear()}>Clear</button>
       </div>
 
-      <button className="done-btn" onClick={handleFinalize}>
-        Finalize & Save Report
-      </button>
+      <div className="summary-actions">
+        <button className="export-btn" onClick={handleExportPdf} type="button">
+          Export PDF
+        </button>
+        <button className="done-btn" onClick={handleFinalize}>
+          Finalize & Save Report
+        </button>
+      </div>
     </div>
   );
 }

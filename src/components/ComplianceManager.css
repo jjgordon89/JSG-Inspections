@@ -1,0 +1,48 @@
+.compliance-manager {
+  padding: 24px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.add-standard-form,
+.assign-standard-form {
+  margin-bottom: 24px;
+}
+
+.add-standard-form h3,
+.assign-standard-form h3 {
+  margin-top: 0;
+}
+
+.add-standard-form form,
+.assign-standard-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.add-standard-form input,
+.add-standard-form textarea,
+.assign-standard-form select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.add-standard-form button,
+.assign-standard-form button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.add-standard-form button:hover,
+.assign-standard-form button:hover {
+  background-color: #0056b3;
+}

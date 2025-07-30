@@ -48,6 +48,39 @@ db.serialize(() => {
     file_path TEXT,
     FOREIGN KEY (equipment_id) REFERENCES equipment (id)
   )`);
+
+  // Create scheduled_inspections table
+  db.run(`CREATE TABLE IF NOT EXISTS scheduled_inspections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    equipment_id INTEGER,
+    scheduled_date TEXT,
+    assigned_inspector TEXT,
+    status TEXT, -- e.g., 'scheduled', 'in-progress', 'completed'
+    FOREIGN KEY (equipment_id) REFERENCES equipment (id)
+  )`);
+
+  // Create compliance_standards table
+  db.run(`CREATE TABLE IF NOT EXISTS compliance_standards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    description TEXT,
+    authority TEXT -- e.g., OSHA, ANSI
+  )`);
+
+  // Create equipment_type_compliance table
+  db.run(`CREATE TABLE IF NOT EXISTS equipment_type_compliance (
+    equipment_type TEXT,
+    standard_id INTEGER,
+    PRIMARY KEY (equipment_type, standard_id),
+    FOREIGN KEY (standard_id) REFERENCES compliance_standards (id)
+  )`);
+
+  // Add indexes for performance
+  db.run('CREATE INDEX IF NOT EXISTS idx_equipment_id ON equipment (equipment_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inspections_equipment_id ON inspections (equipment_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inspections_date ON inspections (inspection_date)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_documents_equipment_id ON documents (equipment_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_scheduled_inspections_equipment_id ON scheduled_inspections (equipment_id)');
 });
 
 module.exports = db;

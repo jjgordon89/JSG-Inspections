@@ -1,0 +1,37 @@
+.report-generator {
+  padding: 24px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.report-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.report-options select,
+.report-options button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.report-options button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border: none;
+  align-self: flex-start;
+}
+
+.report-options button:hover {
+  background-color: #0056b3;
+}
+
+.report-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

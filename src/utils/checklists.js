@@ -58,6 +58,11 @@ export const checklists = {
   },
 };
 
+import customTemplates from './customTemplates.json';
+
 export const getChecklistForEquipment = (equipmentType) => {
+  if (customTemplates[equipmentType]) {
+    return customTemplates[equipmentType];
+  }
   return checklists[equipmentType] || {};
 };

@@ -1,0 +1,97 @@
+.template-builder {
+  padding: 24px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.template-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.template-controls select,
+.template-controls input,
+.template-controls button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.template-controls button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+
+.template-controls button:hover {
+  background-color: #0056b3;
+}
+
+.template-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header input {
+  font-size: 1.2em;
+  font-weight: bold;
+  border: none;
+  border-bottom: 2px solid #007bff;
+  padding: 4px;
+}
+
+.section-header button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item input,
+.item select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.item button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}

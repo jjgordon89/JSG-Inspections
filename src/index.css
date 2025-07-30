@@ -7,6 +7,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.App {
+  @apply bg-white text-gray-900;
+}
+
+.dark .App {
+  @apply bg-gray-900 text-gray-100;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
