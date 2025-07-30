@@ -15,24 +15,29 @@ import Scheduler from './components/Scheduler';
 import ReportGenerator from './components/ReportGenerator';
 import ComplianceManager from './components/ComplianceManager';
 import Settings from './components/Settings';
-import useStore from './store';
+import { useUIStore, useEquipmentStore, useInspectionStore } from './store';
 
 function App() {
-  const refresh = useStore((state) => state.refresh);
-  const editingEquipment = useStore((state) => state.editingEquipment);
-  const viewingInspectionsFor = useStore((state) => state.viewingInspectionsFor);
-  const addingInspectionFor = useStore((state) => state.addingInspectionFor);
-  const inspectingEquipment = useStore((state) => state.inspectingEquipment);
-  const isSidebarOpen = useStore((state) => state.isSidebarOpen);
-  const darkMode = useStore((state) => state.darkMode);
-  const view = useStore((state) => state.view);
-  const toggleRefresh = useStore((state) => state.toggleRefresh);
-  const setEditingEquipment = useStore((state) => state.setEditingEquipment);
-  const setViewingInspectionsFor = useStore((state) => state.setViewingInspectionsFor);
-  const setAddingInspectionFor = useStore((state) => state.setAddingInspectionFor);
-  const setInspectingEquipment = useStore((state) => state.setInspectingEquipment);
-  const toggleSidebar = useStore((state) => state.toggleSidebar);
-  const toggleDarkMode = useStore((state) => state.toggleDarkMode);
+  // UI state from uiStore
+  const view = useUIStore((state) => state.view);
+  const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
+  const darkMode = useUIStore((state) => state.darkMode);
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const toggleDarkMode = useUIStore((state) => state.toggleDarkMode);
+  
+  // Equipment state from equipmentStore
+  const refresh = useEquipmentStore((state) => state.refresh);
+  const editingEquipment = useEquipmentStore((state) => state.editingEquipment);
+  const inspectingEquipment = useEquipmentStore((state) => state.inspectingEquipment);
+  const toggleRefresh = useEquipmentStore((state) => state.toggleRefresh);
+  const setEditingEquipment = useEquipmentStore((state) => state.setEditingEquipment);
+  const setInspectingEquipment = useEquipmentStore((state) => state.setInspectingEquipment);
+  
+  // Inspection state from inspectionStore
+  const viewingInspectionsFor = useInspectionStore((state) => state.viewingInspectionsFor);
+  const addingInspectionFor = useInspectionStore((state) => state.addingInspectionFor);
+  const setViewingInspectionsFor = useInspectionStore((state) => state.setViewingInspectionsFor);
+  const setAddingInspectionFor = useInspectionStore((state) => state.setAddingInspectionFor);
 
   const showToast = (message) => {
     toast(message);
@@ -165,7 +170,7 @@ function App() {
                 >
                   Add Inspection
                 </button>
-                <InspectionList equipmentId={viewingInspectionsFor} showToast={showToast} />
+                <InspectionList showToast={showToast} />
               </div>
             </Modal>
           )}

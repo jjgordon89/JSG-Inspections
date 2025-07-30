@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import EquipmentCard from './EquipmentCard';
 import QrScanner from './QrScanner';
 import './EquipmentList.css';
+import { useEquipmentStore } from '../store';
 
-function EquipmentList({ onEdit, onViewInspections, showToast, onInspect }) {
+function EquipmentList({ onViewInspections, showToast }) {
   const [equipment, setEquipment] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
@@ -14,9 +15,14 @@ function EquipmentList({ onEdit, onViewInspections, showToast, onInspect }) {
     window.api.all('SELECT * FROM equipment').then(setEquipment);
   };
 
+  // Get state and actions from equipmentStore
+  const refresh = useEquipmentStore((state) => state.refresh);
+  const setEditingEquipment = useEquipmentStore((state) => state.setEditingEquipment);
+  const setInspectingEquipment = useEquipmentStore((state) => state.setInspectingEquipment);
+
   useEffect(() => {
     fetchEquipment();
-  }, []);
+  }, [refresh]); // Re-fetch when refresh state changes
 
   const handleDelete = async (id) => {
     await window.api.run('DELETE FROM equipment WHERE id = ?', [id]);
@@ -28,7 +34,7 @@ function EquipmentList({ onEdit, onViewInspections, showToast, onInspect }) {
     if (scannedData) {
       const equipment = await window.api.get('SELECT * FROM equipment WHERE equipment_id = ?', [scannedData]);
       if (equipment) {
-        onInspect(equipment);
+        setInspectingEquipment(equipment);
       } else {
         alert('Equipment not found');
       }
@@ -75,10 +81,10 @@ function EquipmentList({ onEdit, onViewInspections, showToast, onInspect }) {
             <EquipmentCard
               key={item.id}
               equipment={item}
-              onEdit={onEdit}
+              onEdit={setEditingEquipment}
               onDelete={handleDelete}
               onViewInspections={onViewInspections}
-              onInspect={onInspect}
+              onInspect={setInspectingEquipment}
             />
           ))
         )}

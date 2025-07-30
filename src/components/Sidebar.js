@@ -1,9 +1,10 @@
 import React from 'react';
-import useStore from '../store';
+import useUIStore from '../store/uiStore';
 import './Sidebar.css';
 
 const Sidebar = React.memo(function Sidebar({ toggleSidebar, isSidebarOpen }) {
-  const { view, setView } = useStore();
+  const view = useUIStore((state) => state.view);
+  const setView = useUIStore((state) => state.setView);
 
   return (
     <nav

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { generateInspectionPdf } from '../utils/generatePdf';
+import { useInspectionStore } from '../store';
 
-function InspectionList({ equipmentId }) {
+function InspectionList() {
   const [inspections, setInspections] = useState([]);
+  const viewingInspectionsFor = useInspectionStore((state) => state.viewingInspectionsFor);
 
   useEffect(() => {
-    if (equipmentId) {
-      window.api.all('SELECT * FROM inspections WHERE equipment_id = ?', [equipmentId]).then(setInspections);
+    if (viewingInspectionsFor) {
+      window.api.all('SELECT * FROM inspections WHERE equipment_id = ?', [viewingInspectionsFor]).then(setInspections);
     }
-  }, [equipmentId]);
+  }, [viewingInspectionsFor]);
 
   return (
     <div className="mt-4">
