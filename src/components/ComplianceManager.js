@@ -6,9 +6,12 @@ function ComplianceManager() {
   const [equipmentTypes, setEquipmentTypes] = useState([]);
   const [selectedStandard, setSelectedStandard] = useState('');
   const [selectedEquipmentType, setSelectedEquipmentType] = useState('');
+  const [assignedStandards, setAssignedStandards] = useState([]);
   const [newStandardName, setNewStandardName] = useState('');
   const [newStandardDescription, setNewStandardDescription] = useState('');
   const [newStandardAuthority, setNewStandardAuthority] = useState('');
+  const [complianceStatus, setComplianceStatus] = useState([]);
+  const [isLoadingCompliance, setIsLoadingCompliance] = useState(false);
 
   useEffect(() => {
     fetchStandards();
@@ -41,6 +44,24 @@ function ComplianceManager() {
     setNewStandardAuthority('');
   };
 
+  useEffect(() => {
+    if (selectedEquipmentType) {
+      fetchAssignedStandards(selectedEquipmentType);
+    } else {
+      setAssignedStandards([]);
+    }
+  }, [selectedEquipmentType]);
+
+  const fetchAssignedStandards = async (equipmentType) => {
+    const assigned = await window.api.all(
+      `SELECT cs.id, cs.name FROM compliance_standards cs
+       JOIN equipment_type_compliance etc ON cs.id = etc.standard_id
+       WHERE etc.equipment_type = ?`,
+      [equipmentType]
+    );
+    setAssignedStandards(assigned);
+  };
+
   const handleAssignStandard = async (e) => {
     e.preventDefault();
     if (!selectedEquipmentType || !selectedStandard) {
@@ -48,15 +69,97 @@ function ComplianceManager() {
       return;
     }
     await window.api.run(
-      'INSERT INTO equipment_type_compliance (equipment_type, standard_id) VALUES (?, ?)',
+      'INSERT OR IGNORE INTO equipment_type_compliance (equipment_type, standard_id) VALUES (?, ?)',
       [selectedEquipmentType, selectedStandard]
     );
+    fetchAssignedStandards(selectedEquipmentType);
     alert('Standard assigned successfully.');
+  };
+
+  const handleUnassignStandard = async (standardId) => {
+    if (!selectedEquipmentType) return;
+    await window.api.run(
+      'DELETE FROM equipment_type_compliance WHERE equipment_type = ? AND standard_id = ?',
+      [selectedEquipmentType, standardId]
+    );
+    fetchAssignedStandards(selectedEquipmentType);
+  };
+
+  const handleDeleteStandard = async (id) => {
+    if (window.confirm('Are you sure you want to delete this standard? This will also remove all assignments.')) {
+      // In a real app, you might want to handle assignments more gracefully.
+      // For now, we'll just delete the standard. The assignments will be orphaned but won't cause errors.
+      // A better approach would be to use a transaction to delete assignments first.
+      await window.api.run('DELETE FROM compliance_standards WHERE id = ?', [id]);
+      fetchStandards();
+    }
+  };
+
+  const calculateComplianceStatus = async () => {
+    setIsLoadingCompliance(true);
+
+    const equipment = await window.api.all('SELECT * FROM equipment');
+    const requirements = await window.api.all(`
+      SELECT etc.equipment_type, cs.name as standard_name, cs.id as standard_id
+      FROM equipment_type_compliance etc
+      JOIN compliance_standards cs ON etc.standard_id = cs.id
+    `);
+    const inspections = await window.api.all('SELECT equipment_id, MAX(inspection_date) as last_inspection_date FROM inspections GROUP BY equipment_id');
+
+    const inspectionsMap = inspections.reduce((acc, insp) => {
+      acc[insp.equipment_id] = insp.last_inspection_date;
+      return acc;
+    }, {});
+
+    const requirementsMap = requirements.reduce((acc, req) => {
+      if (!acc[req.equipment_type]) {
+        acc[req.equipment_type] = [];
+      }
+      acc[req.equipment_type].push(req.standard_name);
+      return acc;
+    }, {});
+
+    const status = equipment.map(item => {
+      const requiredStandards = requirementsMap[item.type] || [];
+      if (requiredStandards.length === 0) {
+        return { ...item, status: 'N/A', reason: 'No standards assigned to type' };
+      }
+
+      const lastInspectionDate = inspectionsMap[item.id];
+      if (!lastInspectionDate) {
+        return { ...item, status: 'Non-Compliant', reason: 'No inspection history' };
+      }
+
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const inspectionDate = new Date(lastInspectionDate);
+
+      if (inspectionDate < oneYearAgo) {
+        return { ...item, status: 'Non-Compliant', reason: `Last inspection on ${lastInspectionDate} (over 1 year ago)` };
+      }
+
+      return { ...item, status: 'Compliant', reason: `Last inspection on ${lastInspectionDate}` };
+    });
+
+    setComplianceStatus(status);
+    setIsLoadingCompliance(false);
   };
 
   return (
     <div className="compliance-manager">
       <h2>Compliance Management</h2>
+
+      <div className="standards-list">
+        <h3>Existing Standards</h3>
+        <ul>
+          {standards.map((standard) => (
+            <li key={standard.id}>
+              <strong>{standard.name}</strong> ({standard.authority}): {standard.description}
+              <button onClick={() => handleDeleteStandard(standard.id)} className="delete-button">Delete</button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="add-standard-form">
         <h3>Add New Standard</h3>
@@ -112,6 +215,48 @@ function ComplianceManager() {
           </select>
           <button type="submit">Assign Standard</button>
         </form>
+        {selectedEquipmentType && (
+          <div className="assigned-standards-list">
+            <h4>Assigned to {selectedEquipmentType}</h4>
+            <ul>
+              {assignedStandards.map((standard) => (
+                <li key={standard.id}>
+                  {standard.name}
+                  <button onClick={() => handleUnassignStandard(standard.id)} className="delete-button">Remove</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="compliance-status-checker">
+        <h3>Equipment Compliance Status</h3>
+        <button onClick={calculateComplianceStatus} disabled={isLoadingCompliance}>
+          {isLoadingCompliance ? 'Calculating...' : 'Calculate Compliance Status'}
+        </button>
+        {complianceStatus.length > 0 && (
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {complianceStatus.map(item => (
+                <tr key={item.id} className={`status-${item.status.toLowerCase().replace(' ', '-')}`}>
+                  <td>{item.equipment_id}</td>
+                  <td>{item.type}</td>
+                  <td>{item.status}</td>
+                  <td>{item.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

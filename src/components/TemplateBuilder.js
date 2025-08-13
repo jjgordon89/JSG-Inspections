@@ -113,6 +113,30 @@ function TemplateBuilder() {
     }
   };
 
+  const handleDeleteTemplate = async () => {
+    if (!state.selectedTemplate) {
+      alert("Please select a template to delete.");
+      return;
+    }
+    const templateToDelete = state.templates[state.selectedTemplate];
+    if (!templateToDelete || !templateToDelete.id) {
+      alert("Cannot delete - template ID not found.");
+      return;
+    }
+
+    try {
+      await window.api.deleteTemplate(templateToDelete.id);
+      const newTemplates = { ...state.templates };
+      delete newTemplates[state.selectedTemplate];
+      dispatch({ type: "SET_TEMPLATES", payload: newTemplates });
+      dispatch({ type: "RESET" });
+      alert("Template deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete template:", error);
+      alert("Error deleting template.");
+    }
+  };
+
   return (
     <div className="template-builder">
       <h2>Custom Inspection Template Builder</h2>
@@ -137,6 +161,7 @@ function TemplateBuilder() {
         />
         <button onClick={handleSaveTemplate}>Save Template</button>
         <button onClick={() => dispatch({ type: "RESET" })}>New Template</button>
+        <button onClick={handleDeleteTemplate} className="delete-button">Delete Selected Template</button>
       </div>
 
       <div className="template-editor">
