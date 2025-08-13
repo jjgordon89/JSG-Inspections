@@ -1,7 +1,9 @@
 const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
 const path = require('path');
-const db = require('../database');
+const { initializeDatabase } = require('../database');
 const fs = require('fs').promises;
+
+let db;
 
 // disable cache
 app.commandLine.appendSwitch('disable-http-cache');
@@ -26,6 +28,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  db = initializeDatabase(app);
   createWindow();
 
   // Check for scheduled inspections periodically
@@ -95,27 +98,48 @@ ipcMain.handle('db-all', async (event, sql, params) => {
 });
 
 ipcMain.handle('get-templates', async () => {
-  const templatesPath = path.join(app.getAppPath(), 'src', 'utils', 'customTemplates.json');
-  try {
-    const data = await fs.readFile(templatesPath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return {}; // Return empty object if file doesn't exist
-    }
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    db.all('SELECT id, name, fields FROM inspection_templates', [], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        // Transform the array of rows into an object keyed by template name
+        const templates = rows.reduce((acc, row) => {
+          acc[row.name] = { id: row.id, ...JSON.parse(row.fields) };
+          return acc;
+        }, {});
+        resolve(templates);
+      }
+    });
+  });
 });
 
 ipcMain.handle('save-template', async (event, name, template) => {
-  const templatesPath = path.join(app.getAppPath(), 'src', 'utils', 'customTemplates.json');
-  try {
-    const templates = await ipcMain.handle('get-templates');
-    templates[name] = template;
-    await fs.writeFile(templatesPath, JSON.stringify(templates, null, 2));
-  } catch (error) {
-    throw error;
-  }
+  const fields = JSON.stringify(template);
+  return new Promise((resolve, reject) => {
+    // Use INSERT OR REPLACE to either create a new template or update an existing one based on the unique name
+    const sql = `INSERT INTO inspection_templates (name, fields) VALUES (?, ?)
+                 ON CONFLICT(name) DO UPDATE SET fields=excluded.fields`;
+    db.run(sql, [name, fields], function (err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ id: this.lastID });
+      }
+    });
+  });
+});
+
+ipcMain.handle('delete-template', async (event, id) => {
+  return new Promise((resolve, reject) => {
+    db.run('DELETE FROM inspection_templates WHERE id = ?', [id], function (err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ changes: this.changes });
+      }
+    });
+  });
 });
 
 ipcMain.handle('backup-database', async () => {

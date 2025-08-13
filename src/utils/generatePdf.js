@@ -15,6 +15,66 @@ export const generateEquipmentPdf = (equipment) => {
   doc.save(`${equipment.manufacturer}_${equipment.model}_report.pdf`);
 };
 
+export const generateHistoryReport = (equipment, inspections) => {
+  const doc = new jsPDF();
+  let y = 20;
+
+  // Title page
+  doc.setFontSize(18);
+  doc.text(`Inspection History Report for ${equipment.equipment_id}`, 20, y);
+  y += 15;
+  doc.setFontSize(12);
+  doc.text(`Manufacturer: ${equipment.manufacturer}`, 20, y);
+  doc.text(`Model: ${equipment.model}`, 100, y);
+  y += 7;
+  doc.text(`Serial Number: ${equipment.serial_number}`, 20, y);
+  doc.text(`Capacity: ${equipment.capacity} lbs`, 100, y);
+  y += 7;
+  doc.text(`Location: ${equipment.location}`, 20, y);
+  y += 14;
+
+  doc.setFontSize(14);
+  doc.text('Inspection Records', 20, y);
+  y += 7;
+
+  // Table Header
+  doc.setFontSize(10);
+  doc.text('Date', 20, y);
+  doc.text('Inspector', 60, y);
+  doc.text('Deficiencies', 120, y);
+  doc.text('Result', 160, y);
+  y += 7;
+  doc.line(20, y-2, 190, y-2); // horizontal line
+
+  inspections.forEach(inspection => {
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+
+    let findings = [];
+    try {
+      findings = JSON.parse(inspection.findings);
+    } catch (e) {
+      findings = [];
+    }
+
+    const allItems = findings.flatMap(section => section.items);
+    const deficiencies = allItems.filter(item => item.result === 'fail');
+    const result = deficiencies.length === 0 ? 'Pass' : 'Fail';
+
+    doc.text(inspection.inspection_date, 20, y);
+    doc.text(inspection.inspector || 'N/A', 60, y);
+    doc.text(String(deficiencies.length), 120, y);
+    doc.setTextColor(result === 'Pass' ? 'green' : 'red');
+    doc.text(result, 160, y);
+    doc.setTextColor('black');
+    y += 7;
+  });
+
+  doc.save(`history_report_${equipment.equipment_id}.pdf`);
+};
+
 export const generateInspectionPdf = (inspection, options = {}) => {
   const {
     includeSummary = true,

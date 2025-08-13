@@ -1,105 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { generateInspectionPdf } from '../utils/generatePdf';
+import { generateHistoryReport } from '../utils/generatePdf';
 import './ReportGenerator.css';
 
 function ReportGenerator() {
-  const [inspections, setInspections] = useState([]);
-  const [selectedInspection, setSelectedInspection] = useState('');
-  const [includeSummary, setIncludeSummary] = useState(true);
-  const [includeDeficiencies, setIncludeDeficiencies] = useState(true);
-  const [includeComments, setIncludeComments] = useState(true);
-  const [includeSignature, setIncludeSignature] = useState(true);
-  const [logo, setLogo] = useState(null);
+  const [equipment, setEquipment] = useState([]);
+  const [selectedEquipment, setSelectedEquipment] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
-    fetchInspections();
+    fetchEquipment();
   }, []);
 
-  const fetchInspections = async () => {
-    const inspectionList = await window.api.all('SELECT * FROM inspections');
-    setInspections(inspectionList);
+  const fetchEquipment = async () => {
+    const equipmentList = await window.api.all('SELECT * FROM equipment');
+    setEquipment(equipmentList);
   };
 
   const handleGenerateReport = async () => {
-    if (!selectedInspection) {
-      alert('Please select an inspection.');
+    if (!selectedEquipment) {
+      alert('Please select a piece of equipment.');
       return;
     }
-    const inspection = await window.api.get('SELECT * FROM inspections WHERE id = ?', [selectedInspection]);
-    const options = {
-      includeSummary,
-      includeDeficiencies,
-      includeComments,
-      includeSignature,
-      logo,
-    };
-    generateInspectionPdf(inspection, options);
-  };
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files;
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogo(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const equipmentDetails = await window.api.get('SELECT * FROM equipment WHERE id = ?', [selectedEquipment]);
+
+    let sql = 'SELECT * FROM inspections WHERE equipment_id = ?';
+    const params = [selectedEquipment];
+
+    if (startDate) {
+      sql += ' AND inspection_date >= ?';
+      params.push(startDate);
     }
+    if (endDate) {
+      sql += ' AND inspection_date <= ?';
+      params.push(endDate);
+    }
+    sql += ' ORDER BY inspection_date DESC';
+
+    const inspectionHistory = await window.api.all(sql, params);
+
+    if (inspectionHistory.length === 0) {
+      alert('No inspections found for the selected criteria.');
+      return;
+    }
+
+    generateHistoryReport(equipmentDetails, inspectionHistory);
   };
 
   return (
     <div className="report-generator">
-      <h2>Report Generator</h2>
+      <h2>Inspection History Report</h2>
       <div className="report-options">
         <select
-          value={selectedInspection}
-          onChange={(e) => setSelectedInspection(e.target.value)}
+          value={selectedEquipment}
+          onChange={(e) => setSelectedEquipment(e.target.value)}
           required
         >
-          <option value="">Select Inspection</option>
-          {inspections.map((item) => (
+          <option value="">Select Equipment</option>
+          {equipment.map((item) => (
             <option key={item.id} value={item.id}>
-              Inspection #{item.id} - {item.inspection_date}
+              {item.equipment_id} - {item.type}
             </option>
           ))}
         </select>
         <label>
-          <input
-            type="checkbox"
-            checked={includeSummary}
-            onChange={(e) => setIncludeSummary(e.target.checked)}
-          />
-          Include Summary
+          Start Date:
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
         <label>
-          <input
-            type="checkbox"
-            checked={includeDeficiencies}
-            onChange={(e) => setIncludeDeficiencies(e.target.checked)}
-          />
-          Include Deficiencies
+          End Date:
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={includeComments}
-            onChange={(e) => setIncludeComments(e.target.checked)}
-          />
-          Include Comments
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={includeSignature}
-            onChange={(e) => setIncludeSignature(e.target.checked)}
-          />
-          Include Signature
-        </label>
-        <label>
-          Company Logo:
-          <input type="file" accept="image/png, image/jpeg" onChange={handleLogoChange} />
-        </label>
-        <button onClick={handleGenerateReport}>Generate Report</button>
+        <button onClick={handleGenerateReport}>Generate History Report</button>
       </div>
     </div>
   );
