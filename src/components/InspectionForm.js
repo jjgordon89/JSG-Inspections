@@ -28,7 +28,7 @@ function InspectionForm({ onInspectionAdded, onCancel, showToast }) {
     }));
     setSections(formattedSections);
     if (formattedSections.length > 0) {
-      setOpenSection(formattedSections.title);
+      setOpenSection(formattedSections[0].title);
     }
   }, [equipment.type]);
 
@@ -44,13 +44,51 @@ function InspectionForm({ onInspectionAdded, onCancel, showToast }) {
     setSections(updatedSections);
   };
 
+  const handlePhotoAnnotationSave = (annotatedPhoto) => {
+    if (selectedPhotoInfo) {
+      const { sectionTitle, itemIndex, photoIndex } = selectedPhotoInfo;
+      const updatedSections = sections.map(section => {
+        if (section.title === sectionTitle) {
+          const updatedItems = [...section.items];
+          const updatedPhotos = [...updatedItems[itemIndex].photos];
+          updatedPhotos[photoIndex] = annotatedPhoto;
+          updatedItems[itemIndex] = { ...updatedItems[itemIndex], photos: updatedPhotos };
+          return { ...section, items: updatedItems };
+        }
+        return section;
+      });
+      setSections(updatedSections);
+    }
+    setAnnotatingPhoto(null);
+    setSelectedPhotoInfo(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    setShowSummary(true);
+    try {
+      setShowSummary(true);
+      if (showToast) {
+        showToast('Inspection form completed successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error submitting inspection:', error);
+      if (showToast) {
+        showToast('Failed to submit inspection. Please try again.', 'error');
+      }
+    }
   };
 
   if (showSummary) {
-    return <InspectionSummary checklist={sections} onDone={onCancel} equipment={equipment} />;
+    return <InspectionSummary 
+      checklist={sections} 
+      onDone={(success) => {
+        if (success && onInspectionAdded) {
+          onInspectionAdded();
+        }
+        onCancel();
+      }} 
+      equipment={equipment} 
+    />;
   }
 
   return (
@@ -79,7 +117,87 @@ function InspectionForm({ onInspectionAdded, onCancel, showToast }) {
                   </div>
                   {item.result === 'fail' && (
                     <div className="deficiency-details">
-                      {/* Deficiency fields will be added here */}
+                      <div className="deficiency-field">
+                        <label>Priority:</label>
+                        <select 
+                          value={item.priority} 
+                          onChange={(e) => handleUpdateItem(title, itemIndex, { priority: e.target.value })}
+                        >
+                          <option value="Critical">Critical</option>
+                          <option value="Major">Major</option>
+                          <option value="Minor">Minor</option>
+                        </select>
+                      </div>
+                      <div className="deficiency-field">
+                        <label>Component:</label>
+                        <input 
+                          type="text" 
+                          value={item.component} 
+                          onChange={(e) => handleUpdateItem(title, itemIndex, { component: e.target.value })}
+                          placeholder="Affected component"
+                        />
+                      </div>
+                      <div className="deficiency-field">
+                        <label>Notes:</label>
+                        <textarea 
+                          value={item.notes} 
+                          onChange={(e) => handleUpdateItem(title, itemIndex, { notes: e.target.value })}
+                          placeholder="Detailed description of deficiency"
+                          rows="3"
+                        />
+                      </div>
+                      <div className="deficiency-field">
+                        <label>Photos:</label>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          multiple 
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            const photoPromises = files.map(file => {
+                              return new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve({
+                                  file,
+                                  dataUrl: e.target.result,
+                                  annotations: []
+                                });
+                                reader.readAsDataURL(file);
+                              });
+                            });
+                            Promise.all(photoPromises).then(photos => {
+                              const updatedPhotos = [...item.photos, ...photos];
+                              handleUpdateItem(title, itemIndex, { photos: updatedPhotos });
+                            });
+                          }}
+                        />
+                        {item.photos && item.photos.length > 0 && (
+                          <div className="photo-thumbnails">
+                            {item.photos.map((photo, photoIndex) => (
+                              <div key={photoIndex} className="photo-thumbnail">
+                                <img 
+                                  src={photo.dataUrl} 
+                                  alt={`Deficiency ${photoIndex + 1}`}
+                                  onClick={() => {
+                                    setSelectedPhotoInfo({ sectionTitle: title, itemIndex, photoIndex });
+                                    setAnnotatingPhoto(photo);
+                                  }}
+                                />
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedPhotos = item.photos.filter((_, i) => i !== photoIndex);
+                                    handleUpdateItem(title, itemIndex, { photos: updatedPhotos });
+                                  }}
+                                  className="remove-photo"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -92,6 +210,16 @@ function InspectionForm({ onInspectionAdded, onCancel, showToast }) {
         <button type="button" onClick={onCancel}>Cancel</button>
         <button type="submit">Review & Submit</button>
       </div>
+      
+      {annotatingPhoto && (
+        <Modal onClose={() => setAnnotatingPhoto(null)}>
+          <PhotoAnnotation
+            photo={annotatingPhoto}
+            onSave={handlePhotoAnnotationSave}
+            onCancel={() => setAnnotatingPhoto(null)}
+          />
+        </Modal>
+      )}
     </form>
   );
 }

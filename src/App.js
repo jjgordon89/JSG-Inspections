@@ -1,7 +1,6 @@
 import React from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
+import Toast from './components/Toast';
 import EquipmentList from './components/EquipmentList';
 import AddEquipmentForm from './components/AddEquipmentForm';
 import EditEquipmentForm from './components/EditEquipmentForm';
@@ -39,9 +38,7 @@ function App() {
   const setViewingInspectionsFor = useInspectionStore((state) => state.setViewingInspectionsFor);
   const setAddingInspectionFor = useInspectionStore((state) => state.setAddingInspectionFor);
 
-  const showToast = (message) => {
-    toast(message);
-  };
+  const showToast = useUIStore((state) => state.showToast);
 
   const handleEquipmentAdded = () => {
     toggleRefresh();
@@ -173,7 +170,7 @@ function App() {
             </Modal>
           )}
         </main>
-        <ToastContainer />
+        <Toast />
       </div>
     </div>
   );

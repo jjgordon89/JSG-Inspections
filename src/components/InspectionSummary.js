@@ -16,23 +16,28 @@ function InspectionSummary({ checklist, onDone, equipment }) {
   }, {});
 
   const handleFinalize = async () => {
-    const signature = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
-    
-    const inspectionData = {
-      equipment_id: equipment.id,
-      inspector: 'Inspector Name', // Placeholder
-      inspection_date: new Date().toISOString(),
-      findings: JSON.stringify(checklist),
-      summary_comments: summaryComments,
-      signature: signature,
-    };
+    try {
+      const signature = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
+      
+      const inspectionData = {
+        equipment_id: equipment.id,
+        inspector: 'Inspector Name', // Placeholder
+        inspection_date: new Date().toISOString(),
+        findings: JSON.stringify(checklist),
+        summary_comments: summaryComments,
+        signature: signature,
+      };
 
-    await window.api.run(
-      'INSERT INTO inspections (equipment_id, inspector, inspection_date, findings, corrective_actions) VALUES (?, ?, ?, ?, ?)',
-      [inspectionData.equipment_id, inspectionData.inspector, inspectionData.inspection_date, inspectionData.findings, '']
-    );
+      await window.api.run(
+        'INSERT INTO inspections (equipment_id, inspector, inspection_date, findings, corrective_actions, summary_comments, signature) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [inspectionData.equipment_id, inspectionData.inspector, inspectionData.inspection_date, inspectionData.findings, '', inspectionData.summary_comments, inspectionData.signature]
+      );
 
-    onDone();
+      onDone(true); // Pass success = true
+    } catch (error) {
+      console.error('Error finalizing inspection:', error);
+      onDone(false); // Pass success = false
+    }
   };
 
   // Export PDF handler
@@ -79,7 +84,7 @@ function InspectionSummary({ checklist, onDone, equipment }) {
               <p><strong>Notes:</strong> {item.notes}</p>
               <div className="photo-gallery">
                 {item.photos.map((photo, i) => (
-                  <img key={i} src={photo} alt="deficiency" />
+                  <img key={i} src={photo.dataUrl} alt={`Deficiency photo ${i + 1}`} />
                 ))}
               </div>
             </div>

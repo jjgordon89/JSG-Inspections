@@ -58,7 +58,15 @@ export const checklists = {
   },
 };
 
-import customTemplates from './customTemplates.json';
+let customTemplates = {};
+
+// Try to import custom templates, but don't fail if the file doesn't exist
+try {
+  customTemplates = require('./customTemplates.json');
+} catch (error) {
+  console.log('No custom templates file found, using default checklists only');
+  customTemplates = {};
+}
 
 export const getChecklistForEquipment = (equipmentType) => {
   if (customTemplates[equipmentType]) {

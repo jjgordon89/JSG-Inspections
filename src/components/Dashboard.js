@@ -1,5 +1,4 @@
-import React from 'react';
-import { useQuery } from 'react-query';
+import React, { useState, useEffect } from 'react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import './Dashboard.css';
@@ -45,10 +44,30 @@ const fetchDashboardData = async () => {
 };
 
 function Dashboard() {
-  const { data, isLoading, error } = useQuery('dashboardData', fetchDashboardData);
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const dashboardData = await fetchDashboardData();
+        setData(dashboardData);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   if (isLoading) return 'Loading...';
   if (error) return 'An error has occurred: ' + error.message;
+  if (!data) return 'No data available';
 
   const { equipmentStatus, inspectionsPerMonth, upcomingInspections, recentFailures, totalEquipment, totalInspections } = data;
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './AddEquipmentForm.css';
 import { generateQrCode } from '../utils/qr';
+import { withErrorHandling, makeIdempotent } from '../utils/retry';
+import useUIStore from '../store/uiStore';
 
 const initialState = {
   equipmentId: '',
@@ -18,6 +20,7 @@ const initialState = {
 
 function AddEquipmentForm({ onEquipmentAdded }) {
   const [formData, setFormData] = useState(initialState);
+  const showToast = useUIStore((state) => state.showToast);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,21 +42,80 @@ function AddEquipmentForm({ onEquipmentAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { files, ...equipmentData } = formData;
-    const newEquipment = await window.api.run(
-      'INSERT INTO equipment (equipment_id, type, manufacturer, model, serial_number, capacity, installation_date, location, status, qr_code_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      Object.values(equipmentData)
+    
+    const addEquipmentOperation = async () => {
+      const { files, ...equipmentData } = formData;
+      
+      // First, add the equipment
+      const equipmentResult = await window.api.run(
+        'INSERT INTO equipment (equipment_id, type, manufacturer, model, serial_number, capacity, installation_date, location, status, qr_code_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        Object.values(equipmentData)
+      );
+
+      if (window.api.isError(equipmentResult)) {
+        return equipmentResult;
+      }
+
+      // Then add documents with idempotent checks
+      const equipmentId = equipmentResult.data.lastID;
+      const documentResults = [];
+
+      for (const file of files) {
+        const checkExisting = async () => {
+          return await window.api.get(
+            'SELECT id FROM documents WHERE equipment_id = ? AND file_name = ?',
+            [equipmentId, file.name]
+          );
+        };
+
+        const addDocument = async () => {
+          return await window.api.run(
+            'INSERT INTO documents (equipment_id, file_name, file_path) VALUES (?, ?, ?)',
+            [equipmentId, file.name, file.path]
+          );
+        };
+
+        const documentResult = await makeIdempotent(checkExisting, addDocument);
+        documentResults.push(documentResult);
+      }
+
+      // Check if any document operations failed
+      const failedDocuments = documentResults.filter(result => window.api.isError(result));
+      if (failedDocuments.length > 0) {
+        return {
+          success: false,
+          error: {
+            message: `Equipment added but ${failedDocuments.length} document(s) failed to link`,
+            partialSuccess: true,
+            equipmentId
+          }
+        };
+      }
+
+      return { success: true, data: { equipmentId, documentsAdded: documentResults.length } };
+    };
+
+    const result = await withErrorHandling(
+      addEquipmentOperation,
+      showToast,
+      'Add Equipment',
+      {
+        successMessage: `Equipment "${formData.equipmentId}" added successfully`,
+        onSuccess: () => {
+          onEquipmentAdded();
+          setFormData(initialState);
+        },
+        onError: (error) => {
+          // If it was a partial success, still refresh the list
+          if (error.error?.partialSuccess) {
+            onEquipmentAdded();
+            setFormData(initialState);
+          }
+        }
+      }
     );
 
-    for (const file of files) {
-      await window.api.run(
-        'INSERT INTO documents (equipment_id, file_name, file_path) VALUES (?, ?, ?)',
-        [newEquipment.id, file.name, file.path]
-      );
-    }
-
-    onEquipmentAdded();
-    setFormData(initialState);
+    return result;
   };
 
   return (

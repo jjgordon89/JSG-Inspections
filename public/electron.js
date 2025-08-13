@@ -1,6 +1,8 @@
-const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, dialog, shell } = require('electron');
 const path = require('path');
+const isDev = require('electron-is-dev');
 const { initializeDatabase } = require('../database');
+const { secureOperations, validateFilePath } = require('../src/database/secureOperations');
 const fs = require('fs').promises;
 
 let db;
@@ -19,7 +21,9 @@ function createWindow() {
     },
   });
 
-  const startUrl = `file://${path.join(__dirname, '../build/index.html')}`;
+  const startUrl = isDev 
+    ? 'http://localhost:3000' 
+    : `file://${path.join(__dirname, '../build/index.html')}`;
 
   mainWindow.loadURL(startUrl).catch(err => console.log('Failed to load URL:', err));
 
@@ -60,8 +64,108 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC handlers for database operations
+/**
+ * Executes a secure database operation with validation
+ * @param {string} category - Operation category (e.g., 'equipment', 'inspections')
+ * @param {string} operation - Operation name (e.g., 'getAll', 'create')
+ * @param {Object} params - Parameters for the operation
+ * @returns {Promise} - Database operation result
+ */
+async function executeSecureOperation(category, operation, params = {}) {
+  const operationDef = secureOperations[category]?.[operation];
+  
+  if (!operationDef) {
+    throw new Error(`Invalid operation: ${category}.${operation}`);
+  }
+  
+  // Validate parameters
+  if (!operationDef.validate(params)) {
+    throw new Error(`Invalid parameters for operation: ${category}.${operation}`);
+  }
+  
+  // Build parameter array in correct order
+  const paramArray = operationDef.params.map(paramName => params[paramName]);
+  
+  return new Promise((resolve, reject) => {
+    // Determine operation type based on SQL
+    const sql = operationDef.sql;
+    const isWrite = sql.trim().toUpperCase().startsWith('INSERT') || 
+                   sql.trim().toUpperCase().startsWith('UPDATE') || 
+                   sql.trim().toUpperCase().startsWith('DELETE');
+    
+    if (isWrite) {
+      db.run(sql, paramArray, function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ 
+            lastID: this.lastID, 
+            changes: this.changes 
+          });
+        }
+      });
+    } else if (sql.includes('COUNT(*)') || operationDef.params.length === 0) {
+      // Use db.all for queries that might return multiple rows or aggregates
+      db.all(sql, paramArray, (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    } else {
+      // Use db.get for single row queries
+      db.get(sql, paramArray, (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    }
+  });
+}
+
+// Secure IPC handlers for database operations
+ipcMain.handle('secure-db-operation', async (event, category, operation, params) => {
+  try {
+    return await executeSecureOperation(category, operation, params);
+  } catch (error) {
+    console.error(`Secure DB operation failed: ${category}.${operation}`, error);
+    throw error;
+  }
+});
+
+// File operations with path validation
+ipcMain.handle('open-file-path', async (event, filePath) => {
+  try {
+    if (!validateFilePath(filePath)) {
+      throw new Error('Invalid file path');
+    }
+    
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch (err) {
+      throw new Error('File does not exist or is not accessible');
+    }
+    
+    // Use shell.openPath instead of file:// links for security
+    const result = await shell.openPath(filePath);
+    if (result) {
+      throw new Error(`Failed to open file: ${result}`);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('File open operation failed:', error);
+    throw error;
+  }
+});
+
+// Legacy IPC handlers (deprecated - will be removed in future versions)
 ipcMain.handle('db-run', async (event, sql, params) => {
+  console.warn('DEPRECATED: db-run is deprecated. Use secure-db-operation instead.');
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) {
@@ -74,6 +178,7 @@ ipcMain.handle('db-run', async (event, sql, params) => {
 });
 
 ipcMain.handle('db-get', async (event, sql, params) => {
+  console.warn('DEPRECATED: db-get is deprecated. Use secure-db-operation instead.');
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) {
@@ -86,6 +191,7 @@ ipcMain.handle('db-get', async (event, sql, params) => {
 });
 
 ipcMain.handle('db-all', async (event, sql, params) => {
+  console.warn('DEPRECATED: db-all is deprecated. Use secure-db-operation instead.');
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) {
@@ -143,7 +249,7 @@ ipcMain.handle('delete-template', async (event, id) => {
 });
 
 ipcMain.handle('backup-database', async () => {
-  const dbPath = path.join(app.getAppPath(), 'database.db');
+  const dbPath = path.join(app.getPath('userData'), 'database.db');
   const { filePath } = await dialog.showSaveDialog({
     title: 'Backup Database',
     defaultPath: `database-backup-${new Date().toISOString().slice(0, 10)}.db`,
@@ -156,7 +262,7 @@ ipcMain.handle('backup-database', async () => {
 });
 
 ipcMain.handle('restore-database', async () => {
-  const dbPath = path.join(app.getAppPath(), 'database.db');
+  const dbPath = path.join(app.getPath('userData'), 'database.db');
   const { filePaths } = await dialog.showOpenDialog({
     title: 'Restore Database',
     filters: [{ name: 'Database Files', extensions: ['db'] }],
@@ -164,7 +270,7 @@ ipcMain.handle('restore-database', async () => {
   });
 
   if (filePaths && filePaths.length > 0) {
-    await fs.copyFile(filePaths, dbPath);
+    await fs.copyFile(filePaths[0], dbPath);
     app.relaunch();
     app.exit();
   }
