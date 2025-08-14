@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
+import WorkOrderCard from './WorkOrderCard';
+import WorkOrderCreateForm from './WorkOrderCreateForm';
+import WorkOrderCompletionForm from './WorkOrderCompletionForm';
 import './WorkOrders.css';
 
 const WorkOrders = () => {
@@ -353,237 +356,29 @@ const WorkOrders = () => {
           </div>
         ) : (
           filteredWorkOrders.map(wo => (
-            <div key={wo.id} className="work-order-card">
-              <div className="work-order-header">
-                <div className="work-order-title">
-                  <h3>{wo.wo_number}</h3>
-                  <span className="work-order-subtitle">{wo.title}</span>
-                </div>
-                <div className="work-order-badges">
-                  {getStatusBadge(wo.status)}
-                  {getPriorityBadge(wo.priority)}
-                  {getWorkTypeBadge(wo.work_type)}
-                </div>
-              </div>
-
-              <div className="work-order-details">
-                <div className="detail-row">
-                  <span className="detail-label">Equipment:</span>
-                  <span className="detail-value">{wo.equipment_identifier}</span>
-                </div>
-                {wo.assigned_to && (
-                  <div className="detail-row">
-                    <span className="detail-label">Assigned To:</span>
-                    <span className="detail-value">{wo.assigned_to}</span>
-                  </div>
-                )}
-                {wo.scheduled_date && (
-                  <div className="detail-row">
-                    <span className="detail-label">Scheduled:</span>
-                    <span className="detail-value">{new Date(wo.scheduled_date).toLocaleDateString()}</span>
-                  </div>
-                )}
-                {wo.estimated_hours && (
-                  <div className="detail-row">
-                    <span className="detail-label">Estimated Hours:</span>
-                    <span className="detail-value">{wo.estimated_hours}h</span>
-                  </div>
-                )}
-                <div className="detail-row">
-                  <span className="detail-label">Created:</span>
-                  <span className="detail-value">
-                    {new Date(wo.created_at).toLocaleDateString()} by {wo.created_by}
-                  </span>
-                </div>
-              </div>
-
-              {wo.description && (
-                <div className="work-order-description">
-                  <p>{wo.description}</p>
-                </div>
-              )}
-
-              <div className="work-order-actions">
-                {wo.status === 'draft' && (
-                  <button 
-                    className="action-button approve"
-                    onClick={() => handleStatusChange(wo.id, 'approved')}
-                  >
-                    Approve
-                  </button>
-                )}
-                {wo.status === 'approved' && (
-                  <button 
-                    className="action-button assign"
-                    onClick={() => handleStatusChange(wo.id, 'assigned')}
-                  >
-                    Assign
-                  </button>
-                )}
-                {wo.status === 'assigned' && (
-                  <button 
-                    className="action-button start"
-                    onClick={() => handleStatusChange(wo.id, 'in_progress')}
-                  >
-                    Start Work
-                  </button>
-                )}
-                {wo.status === 'in_progress' && (
-                  <button 
-                    className="action-button complete"
-                    onClick={() => handleCompleteWorkOrder(wo)}
-                  >
-                    Complete
-                  </button>
-                )}
-                {wo.status === 'completed' && (
-                  <button 
-                    className="action-button close"
-                    onClick={() => handleStatusChange(wo.id, 'closed')}
-                  >
-                    Close
-                  </button>
-                )}
-                <button 
-                  className="action-button details"
-                  onClick={() => setSelectedWorkOrder(wo)}
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
+            <WorkOrderCard
+              key={wo.id}
+              workOrder={wo}
+              onStatusChange={handleStatusChange}
+              onComplete={handleCompleteWorkOrder}
+              onViewDetails={setSelectedWorkOrder}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              getWorkTypeBadge={getWorkTypeBadge}
+            />
           ))
         )}
       </div>
 
       {/* Create Work Order Modal */}
       {showCreateForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Create Work Order</h2>
-              <button 
-                className="close-button"
-                onClick={() => setShowCreateForm(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateWorkOrder} className="create-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Equipment *</label>
-                  <select
-                    value={newWorkOrder.equipmentId}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, equipmentId: e.target.value})}
-                    required
-                  >
-                    <option value="">Select Equipment</option>
-                    {equipment.map(eq => (
-                      <option key={eq.id} value={eq.id}>
-                        {eq.equipment_id} - {eq.type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Work Type *</label>
-                  <select
-                    value={newWorkOrder.workType}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, workType: e.target.value})}
-                    required
-                  >
-                    <option value="corrective">Corrective</option>
-                    <option value="preventive">Preventive</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="project">Project</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Priority *</label>
-                  <select
-                    value={newWorkOrder.priority}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, priority: e.target.value})}
-                    required
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Estimated Hours</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={newWorkOrder.estimatedHours}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, estimatedHours: e.target.value})}
-                    placeholder="0.0"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Title *</label>
-                <input
-                  type="text"
-                  value={newWorkOrder.title}
-                  onChange={(e) => setNewWorkOrder({...newWorkOrder, title: e.target.value})}
-                  required
-                  placeholder="Brief description of work to be performed"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={newWorkOrder.description}
-                  onChange={(e) => setNewWorkOrder({...newWorkOrder, description: e.target.value})}
-                  rows="4"
-                  placeholder="Detailed description of work requirements, safety considerations, and expected outcomes"
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Assigned To</label>
-                  <input
-                    type="text"
-                    value={newWorkOrder.assignedTo}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, assignedTo: e.target.value})}
-                    placeholder="Technician or team name"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Scheduled Date</label>
-                  <input
-                    type="date"
-                    value={newWorkOrder.scheduledDate}
-                    onChange={(e) => setNewWorkOrder({...newWorkOrder, scheduledDate: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button type="button" onClick={() => setShowCreateForm(false)} className="cancel-button">
-                  Cancel
-                </button>
-                <button type="submit" className="submit-button">
-                  Create Work Order
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <WorkOrderCreateForm
+          newWorkOrder={newWorkOrder}
+          setNewWorkOrder={setNewWorkOrder}
+          equipment={equipment}
+          onSubmit={handleCreateWorkOrder}
+          onCancel={() => setShowCreateForm(false)}
+        />
       )}
 
       {/* Work Order Details Modal */}
@@ -715,98 +510,13 @@ const WorkOrders = () => {
 
       {/* Work Order Completion Modal */}
       {showCompletionForm && selectedWorkOrder && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Complete Work Order - {selectedWorkOrder.wo_number}</h2>
-              <button 
-                className="close-button"
-                onClick={() => setShowCompletionForm(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitCompletion} className="create-form">
-              <div className="completion-summary">
-                <h3>{selectedWorkOrder.title}</h3>
-                <p><strong>Equipment:</strong> {selectedWorkOrder.equipment_identifier}</p>
-                {selectedWorkOrder.estimated_hours && (
-                  <p><strong>Estimated Hours:</strong> {selectedWorkOrder.estimated_hours}h</p>
-                )}
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Actual Hours Worked</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={completionData.actualHours}
-                    onChange={(e) => setCompletionData({...completionData, actualHours: e.target.value})}
-                    placeholder="0.0"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Parts Cost ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={completionData.partsCost}
-                    onChange={(e) => setCompletionData({...completionData, partsCost: e.target.value})}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Labor Cost ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={completionData.laborCost}
-                    onChange={(e) => setCompletionData({...completionData, laborCost: e.target.value})}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Total Cost</label>
-                  <input
-                    type="text"
-                    value={`$${((parseFloat(completionData.partsCost) || 0) + (parseFloat(completionData.laborCost) || 0)).toFixed(2)}`}
-                    disabled
-                    className="calculated-field"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Completion Notes</label>
-                <textarea
-                  value={completionData.completionNotes}
-                  onChange={(e) => setCompletionData({...completionData, completionNotes: e.target.value})}
-                  rows="4"
-                  placeholder="Describe work performed, any issues encountered, parts used, and recommendations for future maintenance"
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="button" onClick={() => setShowCompletionForm(false)} className="cancel-button">
-                  Cancel
-                </button>
-                <button type="submit" className="submit-button">
-                  Complete Work Order
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <WorkOrderCompletionForm
+          selectedWorkOrder={selectedWorkOrder}
+          completionData={completionData}
+          setCompletionData={setCompletionData}
+          onSubmit={handleSubmitCompletion}
+          onCancel={() => setShowCompletionForm(false)}
+        />
       )}
     </div>
   );

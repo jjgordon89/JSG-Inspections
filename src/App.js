@@ -1,29 +1,45 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import './App.css';
+
+// Core components (keep in main bundle)
 import Toast from './components/Toast';
-import EquipmentList from './components/EquipmentList';
-import AddEquipmentForm from './components/AddEquipmentForm';
-import EditEquipmentForm from './components/EditEquipmentForm';
-import InspectionForm from './components/InspectionForm';
-import InspectionList from './components/InspectionList';
-import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import Modal from './components/Modal';
-import TemplateBuilder from './components/TemplateBuilder';
-import Scheduler from './components/Scheduler';
-import ReportGenerator from './components/ReportGenerator';
-import ComplianceManager from './components/ComplianceManager';
-import Settings from './components/Settings';
-import WorkOrders from './components/WorkOrders';
-import PreventiveMaintenance from './components/PreventiveMaintenance';
-import Deficiencies from './components/Deficiencies';
-import LoadTests from './components/LoadTests';
-import Calibrations from './components/Calibrations';
-import Credentials from './components/Credentials';
 import Login from './components/Login';
 import UserHeader from './components/UserHeader';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { useUIStore, useEquipmentStore, useInspectionStore } from './store';
+
+// Lazy-loaded components
+import {
+  Dashboard,
+  Equipment,
+  EquipmentList,
+  AddEquipmentForm,
+  EditEquipmentForm,
+  InspectionForm,
+  InspectionList,
+  TemplateBuilder,
+  Scheduler,
+  ReportGenerator,
+  ComplianceManager,
+  Settings,
+  WorkOrders,
+  PreventiveMaintenance,
+  Deficiencies,
+  LoadTests,
+  Calibrations,
+  Credentials,
+  LoadingFallback,
+  preloadCriticalComponents
+} from './utils/lazyComponents';
+
+import SuspenseWrapper from './components/SuspenseWrapper';
+
+// Preload critical components on app initialization
+if (typeof window !== 'undefined') {
+  preloadCriticalComponents();
+}
 
 // Main authenticated application component
 function AuthenticatedApp() {
@@ -119,56 +135,114 @@ function AuthenticatedApp() {
           </div>
         </header>
         <main>
-          {view === 'dashboard' && <Dashboard />}
-          {view === 'templateBuilder' && <TemplateBuilder />}
-          {view === 'scheduler' && <Scheduler />}
-          {view === 'reporting' && <ReportGenerator />}
-          {view === 'workOrders' && <WorkOrders />}
-          {view === 'preventiveMaintenance' && <PreventiveMaintenance />}
-          {view === 'deficiencies' && <Deficiencies />}
-          {view === 'loadTests' && <LoadTests />}
-          {view === 'calibrations' && <Calibrations />}
-          {view === 'credentials' && <Credentials />}
-          {view === 'compliance' && <ComplianceManager />}
-          {view === 'settings' && <Settings />}
+          {view === 'dashboard' && (
+            <SuspenseWrapper componentName="Dashboard">
+              <Dashboard />
+            </SuspenseWrapper>
+          )}
+          {view === 'templateBuilder' && (
+            <SuspenseWrapper componentName="TemplateBuilder">
+              <TemplateBuilder />
+            </SuspenseWrapper>
+          )}
+          {view === 'scheduler' && (
+            <SuspenseWrapper componentName="Scheduler">
+              <Scheduler />
+            </SuspenseWrapper>
+          )}
+          {view === 'reporting' && (
+            <SuspenseWrapper componentName="ReportGenerator">
+              <ReportGenerator />
+            </SuspenseWrapper>
+          )}
+          {view === 'workOrders' && (
+            <SuspenseWrapper componentName="WorkOrders">
+              <WorkOrders />
+            </SuspenseWrapper>
+          )}
+          {view === 'preventiveMaintenance' && (
+            <SuspenseWrapper componentName="PreventiveMaintenance">
+              <PreventiveMaintenance />
+            </SuspenseWrapper>
+          )}
+          {view === 'deficiencies' && (
+            <SuspenseWrapper componentName="Deficiencies">
+              <Deficiencies />
+            </SuspenseWrapper>
+          )}
+          {view === 'loadTests' && (
+            <SuspenseWrapper componentName="LoadTests">
+              <LoadTests />
+            </SuspenseWrapper>
+          )}
+          {view === 'calibrations' && (
+            <SuspenseWrapper componentName="Calibrations">
+              <Calibrations />
+            </SuspenseWrapper>
+          )}
+          {view === 'credentials' && (
+            <SuspenseWrapper componentName="Credentials">
+              <Credentials />
+            </SuspenseWrapper>
+          )}
+          {view === 'compliance' && (
+            <SuspenseWrapper componentName="ComplianceManager">
+              <ComplianceManager />
+            </SuspenseWrapper>
+          )}
+          {view === 'settings' && (
+            <SuspenseWrapper componentName="Settings">
+              <Settings />
+            </SuspenseWrapper>
+          )}
           {view === 'equipment' && !inspectingEquipment && (
             <>
-              <AddEquipmentForm onEquipmentAdded={handleEquipmentAdded} showToast={showToast} />
-              <EquipmentList
-                key={refresh}
-                onEdit={setEditingEquipment}
-                onViewInspections={setViewingInspectionsFor}
-                onInspect={handleStartInspection}
-                showToast={showToast}
-              />
+              <SuspenseWrapper componentName="AddEquipmentForm">
+                <AddEquipmentForm onEquipmentAdded={handleEquipmentAdded} showToast={showToast} />
+              </SuspenseWrapper>
+              <SuspenseWrapper componentName="Equipment">
+                <Equipment
+                  key={refresh}
+                  onEdit={setEditingEquipment}
+                  onViewInspections={setViewingInspectionsFor}
+                  onInspect={handleStartInspection}
+                  showToast={showToast}
+                />
+              </SuspenseWrapper>
             </>
           )}
           {inspectingEquipment && (
-            <InspectionForm
-              onInspectionAdded={handleInspectionComplete}
-              onCancel={() => {
-                setInspectingEquipment(null);
-              }}
-              showToast={showToast}
-            />
+            <SuspenseWrapper componentName="InspectionForm">
+              <InspectionForm
+                onInspectionAdded={handleInspectionComplete}
+                onCancel={() => {
+                  setInspectingEquipment(null);
+                }}
+                showToast={showToast}
+              />
+            </SuspenseWrapper>
           )}
           {editingEquipment && (
             <Modal onClose={handleCancelEdit}>
-              <EditEquipmentForm
-                equipment={editingEquipment}
-                onEquipmentUpdated={handleEquipmentUpdated}
-                onCancel={handleCancelEdit}
-                showToast={showToast}
-              />
+              <SuspenseWrapper componentName="EditEquipmentForm">
+                <EditEquipmentForm
+                  equipment={editingEquipment}
+                  onEquipmentUpdated={handleEquipmentUpdated}
+                  onCancel={handleCancelEdit}
+                  showToast={showToast}
+                />
+              </SuspenseWrapper>
             </Modal>
           )}
           {addingInspectionFor && (
             <Modal onClose={handleCancelAddInspection}>
-              <InspectionForm
-                onInspectionAdded={handleInspectionAdded}
-                onCancel={handleCancelAddInspection}
-                showToast={showToast}
-              />
+              <SuspenseWrapper componentName="InspectionForm">
+                <InspectionForm
+                  onInspectionAdded={handleInspectionAdded}
+                  onCancel={handleCancelAddInspection}
+                  showToast={showToast}
+                />
+              </SuspenseWrapper>
             </Modal>
           )}
           {viewingInspectionsFor && (
@@ -183,7 +257,9 @@ function AuthenticatedApp() {
                 >
                   Add Inspection
                 </button>
-                <InspectionList showToast={showToast} />
+                <SuspenseWrapper componentName="InspectionList">
+                  <InspectionList showToast={showToast} />
+                </SuspenseWrapper>
               </div>
             </Modal>
           )}

@@ -8,7 +8,7 @@ function EquipmentList({ onViewInspections, showToast }) {
   const [equipment, setEquipment] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const [search, setSearch] = useState('');
+
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,6 +35,8 @@ const fetchEquipment = async () => {
 
   // Get state and actions from equipmentStore
   const refresh = useEquipmentStore((state) => state.refresh);
+  const searchTerm = useEquipmentStore((state) => state.searchTerm);
+  const setSearchTerm = useEquipmentStore((state) => state.setSearchTerm);
   const setEditingEquipment = useEquipmentStore((state) => state.setEditingEquipment);
   const setInspectingEquipment = useEquipmentStore((state) => state.setInspectingEquipment);
 
@@ -75,8 +77,8 @@ const fetchEquipment = async () => {
   // Filter equipment by search term (manufacturer or model)
   const filteredEquipment = equipment.filter(
     (item) =>
-      ((item.manufacturer || '') || '').toLowerCase().includes(search.toLowerCase()) ||
-      ((item.model || '') || '').toLowerCase().includes(search.toLowerCase())
+      ((item.manufacturer || '') || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ((item.model || '') || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const currentItems = filteredEquipment.slice(indexOfFirstItem, indexOfLastItem);
@@ -91,9 +93,9 @@ const fetchEquipment = async () => {
           <input
             type="text"
             placeholder="Search by manufacturer or model..."
-            value={search}
+            value={searchTerm}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
             className="equipment-search-input"
@@ -119,9 +121,9 @@ const fetchEquipment = async () => {
           <input
             type="text"
             placeholder="Search by manufacturer or model..."
-            value={search}
+            value={searchTerm}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
             className="equipment-search-input"
@@ -150,9 +152,9 @@ const fetchEquipment = async () => {
         <input
           type="text"
           placeholder="Search by manufacturer or model..."
-          value={search}
+          value={searchTerm}
           onChange={(e) => {
-            setSearch(e.target.value);
+            setSearchTerm(e.target.value);
             setCurrentPage(1);
           }}
           className="equipment-search-input"

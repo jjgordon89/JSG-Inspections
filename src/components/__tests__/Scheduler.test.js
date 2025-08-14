@@ -8,7 +8,12 @@ const mockApi = {
   all: jest.fn(),
   run: jest.fn(),
 };
-global.window = { api: mockApi };
+
+// Ensure window.api is properly set up
+Object.defineProperty(window, 'api', {
+  value: mockApi,
+  writable: true
+});
 
 const mockEquipment = [
   { id: 1, equipment_id: 'EQ-001', type: 'Crane' },
@@ -51,7 +56,9 @@ describe('Scheduler Component', () => {
     });
 
     // Check if the fetched inspections are rendered
-    expect(screen.getByText('Equipment: EQ-001')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Equipment: EQ-001')).toBeInTheDocument();
+    });
     expect(screen.getByText('Equipment: EQ-002')).toBeInTheDocument();
   });
 
@@ -61,19 +68,24 @@ describe('Scheduler Component', () => {
 
     // Fill out the form
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } }); // Select EQ-001
-    fireEvent.change(screen.getByLabelText(/date/i), { target: { value: '2025-12-25' } });
+    const dateInput = document.querySelector('input[type="date"]');
+    fireEvent.change(dateInput, { target: { value: '2025-12-25' } });
     fireEvent.change(screen.getByPlaceholderText('Assigned Inspector'), { target: { value: 'Test Inspector' } });
 
     // Submit the form
-    fireEvent.click(screen.getByText('Schedule Inspection'));
+    const form = screen.getByRole('form') || document.querySelector('form');
+    console.log('Form found:', form);
+    fireEvent.submit(form);
 
     // Check if the API was called with the correct parameters
     await waitFor(() => {
-      expect(mockApi.run).toHaveBeenCalledWith(
-        'INSERT INTO scheduled_inspections (equipment_id, scheduled_date, assigned_inspector, status) VALUES (?, ?, ?, ?)',
-        ['1', '2025-12-25', 'Test Inspector', 'scheduled']
-      );
-    });
+      expect(mockApi.run).toHaveBeenCalled();
+    }, { timeout: 3000 });
+    
+    // Get the actual call arguments
+    const lastCall = mockApi.run.mock.calls[mockApi.run.mock.calls.length - 1];
+    expect(lastCall[0]).toBe('INSERT INTO scheduled_inspections (equipment_id, scheduled_date, assigned_inspector, status, equipmentIdentifier) VALUES (?, ?, ?, ?, ?)');
+    expect(lastCall[1]).toEqual([1, '2025-12-25', 'Test Inspector', 'scheduled', 'EQ-001']);
 
     // Check if the list is refreshed
     expect(mockApi.all).toHaveBeenCalledWith(expect.stringContaining('FROM scheduled_inspections'));
@@ -84,6 +96,14 @@ describe('Scheduler Component', () => {
     global.window.confirm = jest.fn(() => true);
 
     render(<Scheduler />);
+    
+    // Wait for both API calls to complete
+    await waitFor(() => {
+      expect(mockApi.all).toHaveBeenCalledWith('SELECT * FROM scheduled_inspections ORDER BY scheduled_date');
+      expect(mockApi.all).toHaveBeenCalledWith('SELECT * FROM equipment');
+    });
+    
+    // Wait for the content to be rendered
     await waitFor(() => expect(screen.getByText('Equipment: EQ-001')).toBeInTheDocument());
 
     // Find the delete button for the first inspection and click it

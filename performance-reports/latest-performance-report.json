@@ -1,0 +1,163 @@
+{
+  "timestamp": "2025-08-14T10:38:47.869Z",
+  "analysis": {
+    "timestamp": "2025-08-14T10:38:47.868Z",
+    "totalFiles": 54,
+    "javascript": {
+      "totalFiles": 33,
+      "totalSize": 1849471,
+      "mainFiles": 1,
+      "chunkFiles": 32,
+      "averageChunkSize": 51055.125,
+      "largestFiles": [
+        {
+          "name": "48.4144c122.chunk.js",
+          "size": 367028,
+          "sizeFormatted": "358.43 KB"
+        },
+        {
+          "name": "762.1a802f5c.chunk.js",
+          "size": 346780,
+          "sizeFormatted": "338.65 KB"
+        },
+        {
+          "name": "main.d5c9a1b4.js",
+          "size": 215707,
+          "sizeFormatted": "210.65 KB"
+        },
+        {
+          "name": "239.f58fc55c.chunk.js",
+          "size": 202928,
+          "sizeFormatted": "198.17 KB"
+        },
+        {
+          "name": "304.c9f3136a.chunk.js",
+          "size": 150289,
+          "sizeFormatted": "146.77 KB"
+        },
+        {
+          "name": "877.a7c9f401.chunk.js",
+          "size": 147938,
+          "sizeFormatted": "144.47 KB"
+        },
+        {
+          "name": "553.8fdf18e6.chunk.js",
+          "size": 111913,
+          "sizeFormatted": "109.29 KB"
+        },
+        {
+          "name": "360.36e0e44d.chunk.js",
+          "size": 34769,
+          "sizeFormatted": "33.95 KB"
+        },
+        {
+          "name": "486.f946e7f0.chunk.js",
+          "size": 28734,
+          "sizeFormatted": "28.06 KB"
+        },
+        {
+          "name": "970.54202a5a.chunk.js",
+          "size": 24367,
+          "sizeFormatted": "23.8 KB"
+        }
+      ]
+    },
+    "css": {
+      "totalFiles": 21,
+      "totalSize": 97109,
+      "averageSize": 4624.238095238095,
+      "largestFiles": [
+        {
+          "name": "948.8bf9646a.chunk.css",
+          "size": 13991,
+          "sizeFormatted": "13.66 KB"
+        },
+        {
+          "name": "main.0424ee97.css",
+          "size": 10572,
+          "sizeFormatted": "10.32 KB"
+        },
+        {
+          "name": "745.0d489d11.chunk.css",
+          "size": 9545,
+          "sizeFormatted": "9.32 KB"
+        },
+        {
+          "name": "460.879df0cc.chunk.css",
+          "size": 8929,
+          "sizeFormatted": "8.72 KB"
+        },
+        {
+          "name": "532.683a47b8.chunk.css",
+          "size": 8817,
+          "sizeFormatted": "8.61 KB"
+        }
+      ]
+    },
+    "chunks": {
+      "mainChunks": 1,
+      "vendorChunks": 32,
+      "runtimeChunks": 0,
+      "totalChunks": 33,
+      "chunkSizeDistribution": {
+        "small": 26,
+        "medium": 4,
+        "large": 3,
+        "xlarge": 0
+      }
+    },
+    "recommendations": [
+      {
+        "type": "info",
+        "category": "Bundle Optimization",
+        "message": "26 very small chunks detected. Consider chunk merging."
+      },
+      {
+        "type": "info",
+        "category": "CSS Optimization",
+        "message": "21 CSS files found. Consider CSS concatenation."
+      }
+    ]
+  },
+  "metrics": {
+    "bundleSize": {
+      "total": 1946580,
+      "javascript": 1849471,
+      "css": 97109,
+      "formatted": {
+        "total": "1.86 MB",
+        "javascript": "1.76 MB",
+        "css": "94.83 KB"
+      }
+    },
+    "loadTime": {
+      "fast3G": 9.28,
+      "slow3G": 37.13,
+      "cable": 2.97
+    },
+    "compression": {
+      "estimated": "70%",
+      "compressedSize": 583974,
+      "compressedSizeFormatted": "570.29 KB"
+    },
+    "chunks": {
+      "total": 33,
+      "distribution": {
+        "small": 26,
+        "medium": 4,
+        "large": 3,
+        "xlarge": 0
+      }
+    }
+  },
+  "summary": {
+    "totalFiles": 54,
+    "bundleSize": "1.86 MB",
+    "jsFiles": 33,
+    "cssFiles": 21,
+    "recommendationsCount": 2,
+    "criticalIssues": 0,
+    "estimatedLoadTime3G": "9.28s",
+    "compressionSavings": "570.29 KB"
+  }
+}

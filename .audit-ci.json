@@ -1,0 +1,25 @@
+{
+  "allowlist": [],
+  "report-type": "summary",
+  "package-manager": "npm",
+  "levels": {
+    "low": false,
+    "moderate": false,
+    "high": true,
+    "critical": true
+  },
+  "advisories": [],
+  "whitelist": [],
+  "registry": "https://registry.npmjs.org/",
+  "output-format": "text",
+  "pass-enoaudit": true,
+  "show-found": true,
+  "show-not-found": false,
+  "retry": {
+    "count": 5,
+    "factor": 2,
+    "minTimeout": 1000,
+    "maxTimeout": 60000,
+    "randomize": true
+  }
+}

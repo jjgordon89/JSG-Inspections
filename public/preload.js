@@ -68,7 +68,12 @@ function logError(errorObj) {
 function createIPCWrapper(channel, operation, isRetryable = false) {
   return async (...args) => {
     try {
-      const result = await ipcRenderer.invoke(channel, ...args);
+      // Convert camelCase parameters to snake_case for database operations
+      const convertedArgs = args.map(arg => 
+        (typeof arg === 'object' && arg !== null) ? convertToSnakeCase(arg) : arg
+      );
+      
+      const result = await ipcRenderer.invoke(channel, ...convertedArgs);
       
       // If the main process returned an error object, handle it
       if (result && result.success === false) {
@@ -93,8 +98,9 @@ function createIPCWrapper(channel, operation, isRetryable = false) {
         throw error;
       }
       
-      // Return data directly (not wrapped in success object)
-      return result;
+      // Convert snake_case results to camelCase for UI consumption
+      const convertedResult = convertToCamelCase(result);
+      return convertedResult;
     } catch (error) {
       const errorObj = normalizeError(error, operation);
       logError(errorObj);
@@ -116,6 +122,100 @@ function createIPCWrapper(channel, operation, isRetryable = false) {
       }
       throw newError;
     }
+  };
+}
+
+// User context management
+let currentUser = null;
+let sessionInfo = {
+  ipAddress: null,
+  userAgent: navigator.userAgent,
+  sessionId: null,
+  loginTime: null
+};
+
+// Field mapping layer for database snake_case to UI camelCase conversion
+const fieldMappings = {
+  // Equipment fields
+  equipment_id: 'equipmentId',
+  equipment_type: 'equipmentType',
+  serial_number: 'serialNumber',
+  working_load_limit: 'workingLoadLimit',
+  safe_working_load: 'safeWorkingLoad',
+  last_inspection: 'lastInspection',
+  next_inspection: 'nextInspection',
+  created_at: 'createdAt',
+  updated_at: 'updatedAt',
+  
+  // Inspection fields
+  inspection_date: 'inspectionDate',
+  inspector_name: 'inspectorName',
+  inspection_type: 'inspectionType',
+  summary_comments: 'summaryComments',
+  scheduled_inspection_id: 'scheduledInspectionId',
+  
+  // User fields
+  full_name: 'fullName',
+  last_login: 'lastLogin',
+  
+  // Audit log fields
+  user_id: 'userId',
+  entity_type: 'entityType',
+  entity_id: 'entityId',
+  old_values: 'oldValues',
+  new_values: 'newValues',
+  ip_address: 'ipAddress',
+  user_agent: 'userAgent'
+};
+
+// Convert snake_case to camelCase
+function convertToCamelCase(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertToCamelCase);
+  }
+  
+  const converted = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const camelKey = fieldMappings[key] || key;
+    converted[camelKey] = typeof value === 'object' ? convertToCamelCase(value) : value;
+  }
+  return converted;
+}
+
+// Convert camelCase to snake_case for database operations
+function convertToSnakeCase(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertToSnakeCase);
+  }
+  
+  const converted = {};
+  const reverseMapping = Object.fromEntries(
+    Object.entries(fieldMappings).map(([snake, camel]) => [camel, snake])
+  );
+  
+  for (const [key, value] of Object.entries(obj)) {
+    const snakeKey = reverseMapping[key] || key;
+    converted[snakeKey] = typeof value === 'object' ? convertToSnakeCase(value) : value;
+  }
+  return converted;
+}
+
+// Enhanced audit logging with automatic user context
+function createAuditLogEntry(action, entityType, entityId, oldValues = null, newValues = null) {
+  return {
+    userId: currentUser?.id || null,
+    username: currentUser?.username || 'system',
+    action,
+    entityType,
+    entityId,
+    oldValues: oldValues ? JSON.stringify(oldValues) : null,
+    newValues: newValues ? JSON.stringify(newValues) : null,
+    ipAddress: sessionInfo.ipAddress,
+    userAgent: sessionInfo.userAgent
   };
 }
 
@@ -295,9 +395,43 @@ const apiObject = {
 
   // P2 - Audit Log operations
   auditLog: {
-    create: (params) => window.api.secureOperation('auditLog', 'create', params),
+    create: (params) => {
+      // Enhance params with current user context if not provided
+      const enhancedParams = {
+        ...params,
+        userId: params.userId || currentUser?.id || null,
+        username: params.username || currentUser?.username || 'system',
+        ipAddress: params.ipAddress || sessionInfo.ipAddress,
+        userAgent: params.userAgent || sessionInfo.userAgent
+      };
+      return window.api.secureOperation('auditLog', 'create', enhancedParams);
+    },
+    createWithContext: (action, entityType, entityId, oldValues = null, newValues = null) => {
+      const auditEntry = createAuditLogEntry(action, entityType, entityId, oldValues, newValues);
+      return window.api.secureOperation('auditLog', 'create', auditEntry);
+    },
     getByEntity: (entityType, entityId) => window.api.secureOperation('auditLog', 'getByEntity', { entityType, entityId }),
     getRecent: (limit) => window.api.secureOperation('auditLog', 'getRecent', { limit })
+  },
+
+  // User session management
+  userSession: {
+    setCurrentUser: (user) => {
+      currentUser = user;
+      sessionInfo.loginTime = new Date().toISOString();
+      sessionInfo.sessionId = `${user.id}_${Date.now()}`;
+      return currentUser;
+    },
+    getCurrentUser: () => currentUser,
+    clearCurrentUser: () => {
+      currentUser = null;
+      sessionInfo.loginTime = null;
+      sessionInfo.sessionId = null;
+    },
+    setSessionInfo: (info) => {
+      sessionInfo = { ...sessionInfo, ...info };
+    },
+    getSessionInfo: () => sessionInfo
   },
 
   // P2 - Certificates operations

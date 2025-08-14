@@ -1,0 +1,527 @@
+{
+  "timestamp": "2025-08-14T10:37:07.871Z",
+  "files": [
+    {
+      "name": "48.4144c122.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\48.4144c122.chunk.js",
+      "size": 367028,
+      "formattedSize": "358.43 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "762.1a802f5c.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\762.1a802f5c.chunk.js",
+      "size": 346780,
+      "formattedSize": "338.65 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "main.d5c9a1b4.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\main.d5c9a1b4.js",
+      "size": 215707,
+      "formattedSize": "210.65 KB",
+      "type": "javascript",
+      "isMainChunk": true,
+      "isVendorChunk": false,
+      "severity": "ok"
+    },
+    {
+      "name": "239.f58fc55c.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\239.f58fc55c.chunk.js",
+      "size": 202928,
+      "formattedSize": "198.17 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "304.c9f3136a.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\304.c9f3136a.chunk.js",
+      "size": 150289,
+      "formattedSize": "146.77 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "877.a7c9f401.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\877.a7c9f401.chunk.js",
+      "size": 147938,
+      "formattedSize": "144.47 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "553.8fdf18e6.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\553.8fdf18e6.chunk.js",
+      "size": 111913,
+      "formattedSize": "109.29 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "360.36e0e44d.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\360.36e0e44d.chunk.js",
+      "size": 34769,
+      "formattedSize": "33.95 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "486.f946e7f0.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\486.f946e7f0.chunk.js",
+      "size": 28734,
+      "formattedSize": "28.06 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "970.54202a5a.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\970.54202a5a.chunk.js",
+      "size": 24367,
+      "formattedSize": "23.8 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "948.712f883a.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\948.712f883a.chunk.js",
+      "size": 22325,
+      "formattedSize": "21.8 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "977.c1b671df.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\977.c1b671df.chunk.js",
+      "size": 22122,
+      "formattedSize": "21.6 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "745.72911450.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\745.72911450.chunk.js",
+      "size": 18964,
+      "formattedSize": "18.52 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "460.38fd56db.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\460.38fd56db.chunk.js",
+      "size": 18803,
+      "formattedSize": "18.36 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "82.2607574d.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\82.2607574d.chunk.js",
+      "size": 16282,
+      "formattedSize": "15.9 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "532.e827188d.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\532.e827188d.chunk.js",
+      "size": 16160,
+      "formattedSize": "15.78 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "953.0ae6a0f0.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\953.0ae6a0f0.chunk.js",
+      "size": 15547,
+      "formattedSize": "15.18 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "740.5bb93406.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\740.5bb93406.chunk.js",
+      "size": 13774,
+      "formattedSize": "13.45 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "25.5404e1b9.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\25.5404e1b9.chunk.js",
+      "size": 12049,
+      "formattedSize": "11.77 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "859.7a3e1a6a.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\859.7a3e1a6a.chunk.js",
+      "size": 11131,
+      "formattedSize": "10.87 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "294.ef42e18e.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\294.ef42e18e.chunk.js",
+      "size": 11097,
+      "formattedSize": "10.84 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "596.a99f049e.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\596.a99f049e.chunk.js",
+      "size": 6789,
+      "formattedSize": "6.63 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "934.aecc1572.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\934.aecc1572.chunk.js",
+      "size": 5670,
+      "formattedSize": "5.54 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "564.43bd09e5.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\564.43bd09e5.chunk.js",
+      "size": 5197,
+      "formattedSize": "5.08 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "16.614165cf.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\16.614165cf.chunk.js",
+      "size": 4866,
+      "formattedSize": "4.75 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "949.727f2c56.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\949.727f2c56.chunk.js",
+      "size": 4505,
+      "formattedSize": "4.4 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "904.c410858d.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\904.c410858d.chunk.js",
+      "size": 3942,
+      "formattedSize": "3.85 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "928.1b218014.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\928.1b218014.chunk.js",
+      "size": 3526,
+      "formattedSize": "3.44 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "435.7361752f.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\435.7361752f.chunk.js",
+      "size": 2087,
+      "formattedSize": "2.04 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "688.f5db4ad2.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\688.f5db4ad2.chunk.js",
+      "size": 1563,
+      "formattedSize": "1.53 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "899.91fc3f81.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\899.91fc3f81.chunk.js",
+      "size": 1159,
+      "formattedSize": "1.13 KB",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "766.c62eaa87.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\766.c62eaa87.chunk.js",
+      "size": 812,
+      "formattedSize": "812 B",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "454.9e1d9d18.chunk.js",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\js\\454.9e1d9d18.chunk.js",
+      "size": 648,
+      "formattedSize": "648 B",
+      "type": "javascript",
+      "isMainChunk": false,
+      "isVendorChunk": true,
+      "severity": "ok"
+    },
+    {
+      "name": "948.8bf9646a.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\948.8bf9646a.chunk.css",
+      "size": 13991,
+      "formattedSize": "13.66 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "main.0424ee97.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\main.0424ee97.css",
+      "size": 10572,
+      "formattedSize": "10.32 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "745.0d489d11.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\745.0d489d11.chunk.css",
+      "size": 9545,
+      "formattedSize": "9.32 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "460.879df0cc.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\460.879df0cc.chunk.css",
+      "size": 8929,
+      "formattedSize": "8.72 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "532.683a47b8.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\532.683a47b8.chunk.css",
+      "size": 8817,
+      "formattedSize": "8.61 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "82.d35497c1.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\82.d35497c1.chunk.css",
+      "size": 8591,
+      "formattedSize": "8.39 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "360.6a370c27.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\360.6a370c27.chunk.css",
+      "size": 7311,
+      "formattedSize": "7.14 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "740.a0aa73a9.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\740.a0aa73a9.chunk.css",
+      "size": 4914,
+      "formattedSize": "4.8 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "486.03960f60.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\486.03960f60.chunk.css",
+      "size": 4568,
+      "formattedSize": "4.46 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "904.44ee418a.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\904.44ee418a.chunk.css",
+      "size": 2995,
+      "formattedSize": "2.92 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "859.201dfe6f.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\859.201dfe6f.chunk.css",
+      "size": 2985,
+      "formattedSize": "2.92 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "928.24f6da03.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\928.24f6da03.chunk.css",
+      "size": 2884,
+      "formattedSize": "2.82 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "596.00830753.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\596.00830753.chunk.css",
+      "size": 2673,
+      "formattedSize": "2.61 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "949.9301982e.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\949.9301982e.chunk.css",
+      "size": 2342,
+      "formattedSize": "2.29 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "564.11c3f715.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\564.11c3f715.chunk.css",
+      "size": 1268,
+      "formattedSize": "1.24 KB",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "435.1a961fef.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\435.1a961fef.chunk.css",
+      "size": 1017,
+      "formattedSize": "1017 B",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "934.1a961fef.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\934.1a961fef.chunk.css",
+      "size": 1017,
+      "formattedSize": "1017 B",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "688.d1132b28.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\688.d1132b28.chunk.css",
+      "size": 944,
+      "formattedSize": "944 B",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "16.e6ae9e09.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\16.e6ae9e09.chunk.css",
+      "size": 778,
+      "formattedSize": "778 B",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "294.bc66419b.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\294.bc66419b.chunk.css",
+      "size": 526,
+      "formattedSize": "526 B",
+      "type": "css",
+      "severity": "ok"
+    },
+    {
+      "name": "766.5a045392.chunk.css",
+      "path": "C:\\Users\\jjgor\\JSG-Inspections\\build\\static\\css\\766.5a045392.chunk.css",
+      "size": 442,
+      "formattedSize": "442 B",
+      "type": "css",
+      "severity": "ok"
+    }
+  ],
+  "summary": {
+    "totalFiles": 54,
+    "totalSize": 1946580,
+    "jsFiles": 33,
+    "cssFiles": 21,
+    "mediaFiles": 0
+  },
+  "recommendations": [
+    {
+      "type": "info",
+      "category": "css",
+      "message": "21 CSS files found. Consider CSS concatenation and minification.",
+      "priority": "low"
+    }
+  ],
+  "performance": {
+    "totalFiles": 54,
+    "totalSize": 1946580,
+    "jsSize": 1849471,
+    "cssSize": 97109,
+    "mediaSize": 0,
+    "estimatedLoadTime3G": 9.28,
+    "compressionRatio": 70
+  }
+}

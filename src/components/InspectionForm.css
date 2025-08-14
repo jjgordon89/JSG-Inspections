@@ -4,69 +4,7 @@
   padding: 24px;
 }
 
-.inspection-section {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 24px;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-
-.section-content {
-  padding: 24px;
-}
-
-.inspection-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.item-text {
-  font-size: 1.1rem;
-}
-
-.item-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.result-btn {
-  padding: 8px 16px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-}
-
-.result-btn.selected {
-  color: white;
-}
-
-.result-btn.pass.selected { background-color: #28a745; }
-.result-btn.fail.selected { background-color: #dc3545; }
-.result-btn.na.selected { background-color: #6c757d; }
-
-.deficiency-details {
-  grid-column: 1 / -1;
-  background: #fff5f5;
-  padding: 16px;
-  border-radius: 6px;
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* Styles moved to InspectionSection.css and InspectionItem.css */
 
 .form-actions {
   display: flex;

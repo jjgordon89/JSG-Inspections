@@ -1,7 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Doughnut, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
 import './Dashboard.css';
+import { useUIStore, useEquipmentStore, useInspectionStore } from '../store';
+import { batchApiCalls, useMemoizedData, usePerformanceMonitor } from '../utils/performance';
+import { cachedSecureOperation } from '../utils/dataCache';
+import PerformanceMonitor from './PerformanceMonitor';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const Dashboard = () => {
+  const { darkMode } = useUIStore();
+  const { refresh } = useEquipmentStore();
+  const { viewingInspectionsFor } = useInspectionStore();
+  
   const [dashboardData, setDashboardData] = useState({
     equipment: { total: 0, active: 0, outOfService: 0, taggedOut: 0 },
     inspections: { total: 0, thisMonth: 0, overdue: 0, upcoming: 0 },
@@ -17,6 +46,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState('30'); // days
+  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+  
+  const { metrics } = usePerformanceMonitor('Dashboard');
 
   useEffect(() => {
     loadDashboardData();
@@ -32,7 +64,35 @@ const Dashboard = () => {
       futureDate.setDate(futureDate.getDate() + parseInt(selectedTimeframe));
       const futureDateStr = futureDate.toISOString().split('T')[0];
 
-      // Load all dashboard data in parallel
+      // Use cached operations for better performance
+      const apiCalls = [
+        () => cachedSecureOperation('equipment', 'getAll'),
+        () => cachedSecureOperation('equipment', 'getStatusCounts'),
+        () => cachedSecureOperation('inspections', 'getCount'),
+        () => cachedSecureOperation('inspections', 'getPerMonth'),
+        () => cachedSecureOperation('inspections', 'getOverdue'),
+        () => cachedSecureOperation('scheduledInspections', 'getUpcoming', today),
+        () => cachedSecureOperation('workOrders', 'getAll'),
+        () => cachedSecureOperation('workOrders', 'getDueToday'),
+        () => cachedSecureOperation('workOrders', 'getOverdue'),
+        () => cachedSecureOperation('deficiencies', 'getAll'),
+        () => cachedSecureOperation('deficiencies', 'getOpenCritical'),
+        () => cachedSecureOperation('deficiencies', 'getOverdue'),
+        () => cachedSecureOperation('pmSchedules', 'getTotal'),
+        () => cachedSecureOperation('pmSchedules', 'getDue', futureDateStr),
+        () => cachedSecureOperation('pmSchedules', 'getOverdue'),
+        () => cachedSecureOperation('loadTests', 'getTotal'),
+        () => cachedSecureOperation('loadTests', 'getDue', futureDateStr),
+        () => cachedSecureOperation('loadTests', 'getOverdue'),
+        () => cachedSecureOperation('calibrations', 'getTotal'),
+        () => cachedSecureOperation('calibrations', 'getDue', futureDateStr),
+        () => cachedSecureOperation('calibrations', 'getOverdue'),
+        () => cachedSecureOperation('certificates', 'getTotal'),
+        () => cachedSecureOperation('certificates', 'getExpiring', futureDateStr),
+        () => cachedSecureOperation('credentials', 'getTotal'),
+        () => cachedSecureOperation('credentials', 'getExpiring', futureDateStr)
+      ];
+
       const [
         equipmentData,
         equipmentStatusCounts,
@@ -59,33 +119,7 @@ const Dashboard = () => {
         certificatesExpiring,
         credentialsTotal,
         credentialsExpiring
-      ] = await Promise.all([
-        window.api.equipment.getAll(),
-        window.api.equipment.getStatusCounts(),
-        window.api.inspections.getCount(),
-        window.api.inspections.getPerMonth(),
-        window.api.inspections.getOverdue(),
-        window.api.scheduledInspections.getUpcoming(today),
-        window.api.workOrders.getAll(),
-        window.api.workOrders.getDueToday(),
-        window.api.workOrders.getOverdue(),
-        window.api.deficiencies.getAll(),
-        window.api.deficiencies.getOpenCritical(),
-        window.api.deficiencies.getOverdue(),
-        window.api.pmSchedules.getTotal(),
-        window.api.pmSchedules.getDue(futureDateStr),
-        window.api.pmSchedules.getOverdue(),
-        window.api.loadTests.getTotal(),
-        window.api.loadTests.getDue(futureDateStr),
-        window.api.loadTests.getOverdue(),
-        window.api.calibrations.getTotal(),
-        window.api.calibrations.getDue(futureDateStr),
-        window.api.calibrations.getOverdue(),
-        window.api.certificates.getTotal(),
-        window.api.certificates.getExpiring(futureDateStr),
-        window.api.credentials.getTotal(),
-        window.api.credentials.getExpiring(futureDateStr)
-      ]);
+      ] = await batchApiCalls(apiCalls, 3);
 
       // Process equipment status counts with error handling
       const statusCounts = Array.isArray(equipmentStatusCounts) 
@@ -220,6 +254,13 @@ const Dashboard = () => {
             <option value="60">60 Days</option>
             <option value="90">90 Days</option>
           </select>
+          <button
+            onClick={() => setShowPerformanceMonitor(true)}
+            className="performance-monitor-btn"
+            title="Open Performance Monitor"
+          >
+            📊 Performance
+          </button>
         </div>
       </div>
 
@@ -608,6 +649,15 @@ const Dashboard = () => {
         <p>Last updated: {new Date().toLocaleString()}</p>
         <p>JSG Inspections CMMS v2.0 - P2 Implementation Complete</p>
       </div>
+
+      {/* Performance Monitor Modal */}
+      {showPerformanceMonitor && (
+        <PerformanceMonitor
+          isOpen={showPerformanceMonitor}
+          onClose={() => setShowPerformanceMonitor(false)}
+          metrics={metrics}
+        />
+      )}
     </div>
   );
 };
