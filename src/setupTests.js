@@ -41,15 +41,16 @@ Object.defineProperty(window, 'api', {
       equipment: {
         getAll: jest.fn(() => Promise.resolve([
           {
-            id: 'CRANE-001',
-            name: 'Test Crane',
+            id: 1,
+            equipment_id: 'CRANE-001',
+            type: 'Overhead Crane',
             manufacturer: 'Test Manufacturer',
             model: 'Test Model',
-            serialNumber: 'SN123456',
-            capacity: 5000,
+            serial_number: 'SN123456',
+            capacity: '5 tons',
             status: 'active',
             location: 'Warehouse A',
-            installationDate: '2023-01-15'
+            installation_date: '2023-01-15'
           }
         ])),
         create: jest.fn(() => Promise.resolve({ success: true })),

@@ -5,7 +5,7 @@ import { generateEquipmentPdf } from '../utils/generatePdf';
 
 function EquipmentCard({ equipment, onEdit, onDelete, onViewInspections, onInspect }) {
   return (
-    <div className="card">
+    <div className="card" data-testid="equipment-card">
       <div className="card-body">
         <h5 className="card-title">{equipment.equipment_id} - {equipment.type}</h5>
         <p className="card-text"><strong>Manufacturer:</strong> {equipment.manufacturer}</p>
