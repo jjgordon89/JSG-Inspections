@@ -11,6 +11,26 @@ class DataCache {
     this.cacheTimestamps = new Map();
     this.defaultTTL = 5 * 60 * 1000; // 5 minutes default TTL
     this.maxCacheSize = 100; // Maximum number of cached items
+    this.hitCount = 0;
+    this.missCount = 0;
+    this.backgroundSyncQueue = new Map();
+    this.syncInProgress = false;
+    this.offlineMode = false;
+    this.compressionEnabled = true;
+    this.persistentStorage = null;
+    
+    // Initialize persistent storage if available
+    this.initPersistentStorage();
+    
+    // Setup background sync
+    this.setupBackgroundSync();
+    
+    // Listen for online/offline events
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.handleOnline());
+      window.addEventListener('offline', () => this.handleOffline());
+      this.offlineMode = !navigator.onLine;
+    }
     
     // Different TTL for different data types
     this.ttlConfig = {
@@ -141,11 +161,17 @@ class DataCache {
   /**
    * Store data in cache
    */
-  set(category, operation, params = {}, data) {
+  async set(category, operation, params = {}, data) {
     const key = this._generateKey(category, operation, params);
+    const timestamp = Date.now();
     
     this.cache.set(key, data);
-    this.cacheTimestamps.set(key, Date.now());
+    this.cacheTimestamps.set(key, timestamp);
+    
+    // Save to persistent storage if available
+    if (this.persistentStorage) {
+      await this.saveToPersistentStorage(key, data, timestamp);
+    }
     
     this._enforceSizeLimit();
     
@@ -190,6 +216,237 @@ class DataCache {
   }
 
   /**
+   * Initialize persistent storage
+   */
+  async initPersistentStorage() {
+    if (typeof window !== 'undefined' && 'indexedDB' in window) {
+      try {
+        this.persistentStorage = await this.openIndexedDB();
+        await this.loadFromPersistentStorage();
+      } catch (error) {
+        console.warn('Failed to initialize persistent storage:', error);
+      }
+    }
+  }
+
+  /**
+   * Open IndexedDB for persistent caching
+   */
+  openIndexedDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('JSGInspectionsCache', 1);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('cache')) {
+          const store = db.createObjectStore('cache', { keyPath: 'key' });
+          store.createIndex('timestamp', 'timestamp');
+        }
+        if (!db.objectStoreNames.contains('syncQueue')) {
+          db.createObjectStore('syncQueue', { keyPath: 'id' });
+        }
+      };
+    });
+  }
+
+  /**
+   * Load cache from persistent storage
+   */
+  async loadFromPersistentStorage() {
+    if (!this.persistentStorage) return;
+    
+    try {
+      const transaction = this.persistentStorage.transaction(['cache'], 'readonly');
+      const store = transaction.objectStore('cache');
+      const request = store.getAll();
+      
+      request.onsuccess = () => {
+        const items = request.result;
+        items.forEach(item => {
+          if (this._isValidPersistent(item)) {
+            this.cache.set(item.key, item.data);
+            this.cacheTimestamps.set(item.key, item.timestamp);
+          }
+        });
+      };
+    } catch (error) {
+      console.warn('Failed to load from persistent storage:', error);
+    }
+  }
+
+  /**
+   * Save to persistent storage
+   */
+  async saveToPersistentStorage(key, data, timestamp) {
+    if (!this.persistentStorage) return;
+    
+    try {
+      const transaction = this.persistentStorage.transaction(['cache'], 'readwrite');
+      const store = transaction.objectStore('cache');
+      
+      const compressedData = this.compressionEnabled ? 
+        await this.compressData(data) : data;
+      
+      store.put({
+        key,
+        data: compressedData,
+        timestamp,
+        compressed: this.compressionEnabled
+      });
+    } catch (error) {
+      console.warn('Failed to save to persistent storage:', error);
+    }
+  }
+
+  /**
+   * Setup background sync
+   */
+  setupBackgroundSync() {
+    // Periodic sync every 30 seconds
+    setInterval(() => {
+      if (!this.offlineMode && !this.syncInProgress) {
+        this.performBackgroundSync();
+      }
+    }, 30000);
+  }
+
+  /**
+   * Handle online event
+   */
+  async handleOnline() {
+    this.offlineMode = false;
+    console.log('Cache: Back online, starting sync...');
+    await this.performBackgroundSync();
+  }
+
+  /**
+   * Handle offline event
+   */
+  handleOffline() {
+    this.offlineMode = true;
+    console.log('Cache: Offline mode activated');
+  }
+
+  /**
+   * Perform background sync
+   */
+  async performBackgroundSync() {
+    if (this.syncInProgress || this.offlineMode) return;
+    
+    this.syncInProgress = true;
+    
+    try {
+      // Process sync queue
+      for (const [id, operation] of this.backgroundSyncQueue) {
+        try {
+          await this.executeSyncOperation(operation);
+          this.backgroundSyncQueue.delete(id);
+        } catch (error) {
+          console.warn(`Background sync failed for operation ${id}:`, error);
+        }
+      }
+      
+      // Refresh critical data
+      await this.refreshCriticalData();
+      
+    } finally {
+      this.syncInProgress = false;
+    }
+  }
+
+  /**
+   * Add operation to background sync queue
+   */
+  addToSyncQueue(operation) {
+    const id = Date.now() + Math.random();
+    this.backgroundSyncQueue.set(id, {
+      ...operation,
+      timestamp: Date.now()
+    });
+    return id;
+  }
+
+  /**
+   * Execute sync operation
+   */
+  async executeSyncOperation(operation) {
+    if (typeof window !== 'undefined' && window.api) {
+      return await window.api.secureOperation(
+        operation.category,
+        operation.operation,
+        operation.params
+      );
+    }
+  }
+
+  /**
+   * Refresh critical data in background
+   */
+  async refreshCriticalData() {
+    const criticalOperations = [
+      { category: 'equipment', operation: 'getStatusCounts' },
+      { category: 'inspections', operation: 'getCount' },
+      { category: 'deficiencies', operation: 'getOpenCritical' },
+      { category: 'workOrders', operation: 'getDueToday' }
+    ];
+    
+    for (const op of criticalOperations) {
+      try {
+        const data = await this.executeSyncOperation(op);
+        if (data !== undefined) {
+          this.set(op.category, op.operation, {}, data);
+        }
+      } catch (error) {
+        console.warn(`Failed to refresh ${op.category}.${op.operation}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Compress data for storage
+   */
+  async compressData(data) {
+    try {
+      const jsonString = JSON.stringify(data);
+      if (typeof CompressionStream !== 'undefined') {
+        const stream = new CompressionStream('gzip');
+        const writer = stream.writable.getWriter();
+        const reader = stream.readable.getReader();
+        
+        writer.write(new TextEncoder().encode(jsonString));
+        writer.close();
+        
+        const chunks = [];
+        let done = false;
+        
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) chunks.push(value);
+        }
+        
+        return new Uint8Array(chunks.reduce((acc, chunk) => [...acc, ...chunk], []));
+      }
+      return data; // Fallback to uncompressed
+    } catch (error) {
+      console.warn('Compression failed:', error);
+      return data;
+    }
+  }
+
+  /**
+   * Check if persistent cache item is valid
+   */
+  _isValidPersistent(item) {
+    const operationKey = item.key.split(':')[0];
+    const ttl = this.ttlConfig[operationKey] || this.defaultTTL;
+    return (Date.now() - item.timestamp) < ttl;
+  }
+
+  /**
    * Get cache statistics
    */
   getStats() {
@@ -197,7 +454,11 @@ class DataCache {
       size: this.cache.size,
       maxSize: this.maxCacheSize,
       hitRate: this.hitCount / (this.hitCount + this.missCount) || 0,
-      entries: Array.from(this.cache.keys())
+      entries: Array.from(this.cache.keys()),
+      offlineMode: this.offlineMode,
+      syncQueueSize: this.backgroundSyncQueue.size,
+      syncInProgress: this.syncInProgress,
+      persistentStorageEnabled: !!this.persistentStorage
     };
   }
 
@@ -231,6 +492,21 @@ class DataCache {
 
 // Create singleton instance
 const dataCache = new DataCache();
+
+// Initialize cache features
+(async () => {
+  await dataCache.initPersistentStorage();
+  dataCache.setupBackgroundSync();
+  
+  // Setup online/offline event listeners
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => dataCache.handleOnline());
+    window.addEventListener('offline', () => dataCache.handleOffline());
+  }
+  
+  // Initialize cache warmup
+  dataCache.warmUp();
+})();
 
 /**
  * Cached wrapper for secure database operations

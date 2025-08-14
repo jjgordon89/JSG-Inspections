@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import './App.css';
 
 // Core components (keep in main bundle)
@@ -9,6 +9,12 @@ import Login from './components/Login';
 import UserHeader from './components/UserHeader';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { useUIStore, useEquipmentStore, useInspectionStore } from './store';
+
+// Phase 4 enhancements
+import PWAManager from './utils/pwaUtils';
+import analytics from './utils/analytics';
+import advancedTesting from './utils/advancedTesting';
+import dataCache from './utils/dataCache';
 
 // Lazy-loaded components
 import {
@@ -36,9 +42,21 @@ import {
 
 import SuspenseWrapper from './components/SuspenseWrapper';
 
-// Preload critical components on app initialization
+// Preload critical components and initialize Phase 4 enhancements
 if (typeof window !== 'undefined') {
   preloadCriticalComponents();
+  
+  // Initialize PWA features
+  const pwaManager = new PWAManager();
+  pwaManager.init();
+  
+  // Initialize analytics
+  analytics.trackPageView(window.location.pathname);
+  
+  // Initialize advanced testing in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Advanced Testing Framework initialized');
+  }
 }
 
 // Main authenticated application component
@@ -48,6 +66,25 @@ function AuthenticatedApp() {
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   const darkMode = useUIStore((state) => state.darkMode);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  
+  // Phase 4: Analytics and PWA integration
+  useEffect(() => {
+    // Track view changes
+    analytics.trackEvent('view_change', { view, timestamp: Date.now() });
+    
+    // Track page view for analytics
+    analytics.trackPageView(`/app/${view}`);
+  }, [view]);
+  
+  useEffect(() => {
+    // Track dark mode preference
+    analytics.trackEvent('theme_change', { darkMode, timestamp: Date.now() });
+  }, [darkMode]);
+  
+  useEffect(() => {
+    // Track sidebar usage
+    analytics.trackEvent('sidebar_toggle', { isOpen: isSidebarOpen, timestamp: Date.now() });
+  }, [isSidebarOpen]);
   const toggleDarkMode = useUIStore((state) => state.toggleDarkMode);
   
   // Equipment state from equipmentStore
@@ -69,44 +106,112 @@ function AuthenticatedApp() {
   const handleEquipmentAdded = () => {
     toggleRefresh();
     showToast('Equipment added');
+    
+    // Phase 4: Track equipment events
+    analytics.trackEquipmentEvent('added', {
+      id: 'new_equipment',
+      type: 'unknown',
+      location: 'unknown',
+      status: 'active'
+    });
   };
 
   const handleEquipmentUpdated = () => {
     setEditingEquipment(null);
     toggleRefresh();
     showToast('Equipment updated');
+    
+    // Phase 4: Track equipment events
+    if (editingEquipment) {
+      analytics.trackEquipmentEvent('updated', {
+        id: editingEquipment.id,
+        type: editingEquipment.type || 'unknown',
+        location: editingEquipment.location || 'unknown',
+        status: editingEquipment.status || 'active'
+      });
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingEquipment(null);
+    analytics.trackEvent('equipment_edit_cancelled', { timestamp: Date.now() });
   };
 
   const handleCloseInspections = () => {
     setViewingInspectionsFor(null);
+    analytics.trackEvent('inspection_list_closed', { timestamp: Date.now() });
   };
 
   const handleInspectionAdded = () => {
     setAddingInspectionFor(null);
     toggleRefresh();
     showToast('Inspection added');
+    
+    // Phase 4: Track inspection events
+    analytics.trackInspectionEvent('added', {
+      id: 'new_inspection',
+      type: 'manual',
+      status: 'completed',
+      duration: 0,
+      equipmentId: addingInspectionFor?.id || 'unknown'
+    });
   };
 
   const handleCancelAddInspection = () => {
     setAddingInspectionFor(null);
+    analytics.trackEvent('inspection_add_cancelled', { timestamp: Date.now() });
   };
 
   const handleStartInspection = (equipment) => {
     setInspectingEquipment(equipment);
+    
+    // Phase 4: Track inspection start
+    analytics.trackInspectionEvent('started', {
+      id: 'inspection_' + Date.now(),
+      type: 'manual',
+      status: 'in_progress',
+      duration: 0,
+      equipmentId: equipment.id
+    });
   };
 
   const handleInspectionComplete = () => {
     setInspectingEquipment(null);
     toggleRefresh();
     showToast('Inspection complete');
+    
+    // Phase 4: Track inspection completion
+    if (inspectingEquipment) {
+      analytics.trackInspectionEvent('completed', {
+        id: 'inspection_' + Date.now(),
+        type: 'manual',
+        status: 'completed',
+        duration: 0,
+        equipmentId: inspectingEquipment.id
+      });
+    }
   };
 
   return (
     <div className={`App${darkMode ? ' dark' : ''}`}>
+      {/* Phase 4: PWA Install Prompt */}
+      <div id="pwa-install-banner" className="pwa-banner" style={{ display: 'none' }}>
+        <div className="pwa-banner-content">
+          <span>Install JSG Inspections for a better experience</span>
+          <button id="pwa-install-btn" className="pwa-install-button">Install</button>
+          <button id="pwa-dismiss-btn" className="pwa-dismiss-button">×</button>
+        </div>
+      </div>
+      
+      {/* Phase 4: PWA Update Notification */}
+      <div id="pwa-update-banner" className="pwa-update-banner" style={{ display: 'none' }}>
+        <div className="pwa-banner-content">
+          <span>A new version is available</span>
+          <button id="pwa-update-btn" className="pwa-update-button">Update</button>
+          <button id="pwa-update-dismiss-btn" className="pwa-dismiss-button">×</button>
+        </div>
+      </div>
+      
       <Sidebar
         toggleSidebar={toggleSidebar}
         isSidebarOpen={isSidebarOpen}

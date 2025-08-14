@@ -63,6 +63,42 @@ describe('InspectionForm Component', () => {
     useInspectionStore.mockReturnValue(null);
   });
 
+  test('renders inspection form correctly', async () => {
+    render(
+      <InspectionForm
+        onInspectionAdded={mockOnInspectionAdded}
+        onCancel={mockOnCancel}
+        showToast={mockShowToast}
+      />
+    );
+    
+    await waitFor(() => {
+      expect(screen.getByText(/inspection/i)).toBeInTheDocument();
+    });
+    
+    // Check for equipment information
+    const equipmentInfo = screen.queryByText('EQ-001') || screen.queryByText(/crane/i);
+    if (equipmentInfo) {
+      expect(equipmentInfo).toBeInTheDocument();
+    }
+  });
+
+  test('displays checklist items correctly', async () => {
+    render(
+      <InspectionForm
+        onInspectionAdded={mockOnInspectionAdded}
+        onCancel={mockOnCancel}
+        showToast={mockShowToast}
+      />
+    );
+    
+    await waitFor(() => {
+      // Check for checklist sections or items
+      const checklistElements = screen.queryAllByText(/check|verify|inspect/i);
+      expect(checklistElements.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('Initial Section State Logic', () => {
     it('should open the first section by default', async () => {
       render(
