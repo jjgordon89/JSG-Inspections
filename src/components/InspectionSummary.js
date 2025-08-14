@@ -3,9 +3,35 @@ import SignatureCanvas from 'react-signature-canvas';
 import { generateInspectionPdf } from '../utils/generatePdf';
 import './InspectionForm.css';
 
-function InspectionSummary({ checklist, onDone, equipment }) {
+function InspectionSummary({ checklist, onDone, equipment, scheduledInspectionId = null }) {
   const [summaryComments, setSummaryComments] = useState('');
+  const [inspector, setInspector] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const sigCanvas = useRef({});
+
+  // Prefill inspector from scheduled inspection if available
+  React.useEffect(() => {
+    const prefillInspector = async () => {
+      if (scheduledInspectionId) {
+        try {
+          // Get the scheduled inspection to prefill inspector
+          const scheduledInspections = await window.api.secureOperation('scheduledInspections', 'getAll');
+          const scheduledInspection = scheduledInspections.find(si => si.id === scheduledInspectionId);
+          if (scheduledInspection && scheduledInspection.assigned_inspector) {
+            setInspector(scheduledInspection.assigned_inspector);
+          }
+        } catch (error) {
+          console.error('Error fetching scheduled inspection for prefill:', error);
+        }
+      }
+      if (!inspector) {
+        setInspector('Inspector Name'); // Default fallback
+      }
+      setIsLoading(false);
+    };
+
+    prefillInspector();
+  }, [scheduledInspectionId]);
 
   const allItems = checklist.flatMap(section => section.items);
   const deficiencies = allItems.filter(item => item.result === 'fail');
@@ -18,20 +44,68 @@ function InspectionSummary({ checklist, onDone, equipment }) {
   const handleFinalize = async () => {
     try {
       const signature = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
+      const inspectionDate = new Date().toISOString();
       
+      // Create the main inspection record
       const inspectionData = {
-        equipment_id: equipment.id,
-        inspector: 'Inspector Name', // Placeholder
-        inspection_date: new Date().toISOString(),
+        equipmentId: equipment.id,
+        inspector: inspector,
+        inspectionDate: inspectionDate,
         findings: JSON.stringify(checklist),
-        summary_comments: summaryComments,
+        correctiveActions: '', // Will be populated from deficiencies
+        summaryComments: summaryComments,
         signature: signature,
+        scheduledInspectionId: scheduledInspectionId
       };
 
-      await window.api.run(
-        'INSERT INTO inspections (equipment_id, inspector, inspection_date, findings, corrective_actions, summary_comments, signature) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [inspectionData.equipment_id, inspectionData.inspector, inspectionData.inspection_date, inspectionData.findings, '', inspectionData.summary_comments, inspectionData.signature]
-      );
+      // Use the appropriate secure operation based on whether this is from a scheduled inspection
+      const operation = scheduledInspectionId ? 'createFromScheduled' : 'create';
+      const result = await window.api.secureOperation('inspections', operation, inspectionData);
+      const inspectionId = result.lastID;
+
+      // Create itemized inspection items
+      for (const section of checklist) {
+        for (const item of section.items) {
+          const itemData = {
+            inspectionId: inspectionId,
+            standardRef: item.standardRef || null,
+            itemText: item.text,
+            critical: item.critical || false,
+            result: item.result,
+            notes: item.notes || '',
+            photos: JSON.stringify(item.photos || []),
+            component: item.component || '',
+            priority: item.priority || 'Minor'
+          };
+
+          const itemResult = await window.api.secureOperation('inspectionItems', 'create', itemData);
+          
+          // Create deficiency record for failed items
+          if (item.result === 'fail') {
+            const deficiencyData = {
+              equipmentId: equipment.id,
+              inspectionItemId: itemResult.lastID,
+              severity: item.priority.toLowerCase(),
+              removeFromService: item.priority === 'Critical',
+              description: item.notes || `Failed inspection item: ${item.text}`,
+              component: item.component || '',
+              correctiveAction: '',
+              dueDate: null, // Will be set later
+              status: 'open'
+            };
+
+            await window.api.secureOperation('deficiencies', 'create', deficiencyData);
+          }
+        }
+      }
+
+      // Update scheduled inspection status if applicable
+      if (scheduledInspectionId) {
+        await window.api.secureOperation('scheduledInspections', 'updateStatus', {
+          id: scheduledInspectionId,
+          status: 'completed'
+        });
+      }
 
       onDone(true); // Pass success = true
     } catch (error) {
@@ -54,13 +128,29 @@ function InspectionSummary({ checklist, onDone, equipment }) {
     generateInspectionPdf(inspectionData);
   };
 
+  if (isLoading) {
+    return <div className="summary-container">Loading inspection details...</div>;
+  }
+
   return (
     <div className="summary-container">
       <div className="report-header">
         <h2>Inspection Report</h2>
         <p><strong>Equipment:</strong> {equipment.equipment_id} - {equipment.type}</p>
         <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-        <p><strong>Inspector:</strong> Inspector Name</p>
+        <div className="inspector-field">
+          <label><strong>Inspector:</strong></label>
+          <input 
+            type="text" 
+            value={inspector} 
+            onChange={(e) => setInspector(e.target.value)}
+            placeholder="Enter inspector name"
+            style={{ marginLeft: '8px', padding: '4px 8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        </div>
+        {scheduledInspectionId && (
+          <p><strong>Scheduled Inspection ID:</strong> {scheduledInspectionId}</p>
+        )}
       </div>
 
       <div className="at-a-glance">

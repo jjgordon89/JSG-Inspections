@@ -38,19 +38,30 @@ app.whenReady().then(() => {
   // Check for scheduled inspections periodically
   setTimeout(() => {
     setInterval(async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const upcomingInspections = await new Promise((resolve, reject) => {
-        db.all('SELECT * FROM scheduled_inspections WHERE scheduled_date >= ?', [today], (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        });
-      });
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const upcomingInspections = await executeSecureOperation('scheduledInspections', 'getTodayAndLater', { today });
 
-      if (upcomingInspections.length > 0) {
-        new Notification({
-          title: 'Upcoming Inspections',
-          body: `You have ${upcomingInspections.length} inspection(s) scheduled.`,
-        }).show();
+        if (upcomingInspections && upcomingInspections.length > 0) {
+          const notification = new Notification({
+            title: 'Upcoming Inspections',
+            body: `You have ${upcomingInspections.length} inspection(s) scheduled.`,
+          });
+          
+          // Add click handler to focus the application window
+          notification.on('click', () => {
+            const windows = BrowserWindow.getAllWindows();
+            if (windows.length > 0) {
+              const mainWindow = windows[0];
+              if (mainWindow.isMinimized()) mainWindow.restore();
+              mainWindow.focus();
+            }
+          });
+          
+          notification.show();
+        }
+      } catch (error) {
+        console.error('Failed to check for upcoming inspections:', error);
       }
     }, 3600000); // Check every hour
   }, 5000); // Defer by 5 seconds
@@ -78,50 +89,66 @@ async function executeSecureOperation(category, operation, params = {}) {
     throw new Error(`Invalid operation: ${category}.${operation}`);
   }
   
-  // Validate parameters
-  if (!operationDef.validate(params)) {
+  // Validate parameters (pass userDataPath for document operations)
+  const userDataPath = category === 'documents' ? app.getPath('userData') : null;
+  if (!operationDef.validate(params, userDataPath)) {
     throw new Error(`Invalid parameters for operation: ${category}.${operation}`);
   }
   
   // Build parameter array in correct order
   const paramArray = operationDef.params.map(paramName => params[paramName]);
+  const sql = operationDef.sql;
+  const returnType = operationDef.returnType;
   
   return new Promise((resolve, reject) => {
-    // Determine operation type based on SQL
-    const sql = operationDef.sql;
-    const isWrite = sql.trim().toUpperCase().startsWith('INSERT') || 
-                   sql.trim().toUpperCase().startsWith('UPDATE') || 
-                   sql.trim().toUpperCase().startsWith('DELETE');
-    
-    if (isWrite) {
-      db.run(sql, paramArray, function (err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ 
-            lastID: this.lastID, 
-            changes: this.changes 
-          });
-        }
-      });
-    } else if (sql.includes('COUNT(*)') || operationDef.params.length === 0) {
-      // Use db.all for queries that might return multiple rows or aggregates
-      db.all(sql, paramArray, (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
-      });
-    } else {
-      // Use db.get for single row queries
-      db.get(sql, paramArray, (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    // Dispatch based on returnType
+    switch (returnType) {
+      case 'write':
+        db.run(sql, paramArray, function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ 
+              lastID: this.lastID, 
+              changes: this.changes 
+            });
+          }
+        });
+        break;
+        
+      case 'one':
+        db.get(sql, paramArray, (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        });
+        break;
+        
+      case 'many':
+        db.all(sql, paramArray, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+        break;
+        
+      case 'scalar':
+        db.get(sql, paramArray, (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            // For scalar queries, return the first column value
+            resolve(row ? Object.values(row)[0] : null);
+          }
+        });
+        break;
+        
+      default:
+        reject(new Error(`Invalid returnType: ${returnType} for operation: ${category}.${operation}`));
     }
   });
 }
@@ -163,90 +190,50 @@ ipcMain.handle('open-file-path', async (event, filePath) => {
   }
 });
 
-// Legacy IPC handlers (deprecated - will be removed in future versions)
-ipcMain.handle('db-run', async (event, sql, params) => {
-  console.warn('DEPRECATED: db-run is deprecated. Use secure-db-operation instead.');
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ lastID: this.lastID });
-      }
-    });
-  });
+// Managed document import with hash validation
+ipcMain.handle('import-document', async (event, equipmentId, sourceFilePath) => {
+  try {
+    if (!equipmentId || typeof equipmentId !== 'string') {
+      throw new Error('Invalid equipment ID');
+    }
+    
+    // Validate source file exists and is accessible
+    try {
+      await fs.access(sourceFilePath);
+    } catch (err) {
+      throw new Error('Source file does not exist or is not accessible');
+    }
+    
+    // Create managed documents directory structure
+    const documentsDir = path.join(app.getPath('userData'), 'documents', equipmentId);
+    await fs.mkdir(documentsDir, { recursive: true });
+    
+    // Generate destination path with original filename
+    const originalFileName = path.basename(sourceFilePath);
+    const destinationPath = path.join(documentsDir, originalFileName);
+    
+    // Copy file to managed location
+    await fs.copyFile(sourceFilePath, destinationPath);
+    
+    // Calculate SHA256 hash
+    const crypto = require('crypto');
+    const fileBuffer = await fs.readFile(destinationPath);
+    const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    
+    return {
+      storedPath: destinationPath,
+      fileName: originalFileName,
+      hash: hash,
+      size: fileBuffer.length
+    };
+  } catch (error) {
+    console.error('Document import failed:', error);
+    throw error;
+  }
 });
 
-ipcMain.handle('db-get', async (event, sql, params) => {
-  console.warn('DEPRECATED: db-get is deprecated. Use secure-db-operation instead.');
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(row);
-      }
-    });
-  });
-});
-
-ipcMain.handle('db-all', async (event, sql, params) => {
-  console.warn('DEPRECATED: db-all is deprecated. Use secure-db-operation instead.');
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
-  });
-});
-
-ipcMain.handle('get-templates', async () => {
-  return new Promise((resolve, reject) => {
-    db.all('SELECT id, name, fields FROM inspection_templates', [], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Transform the array of rows into an object keyed by template name
-        const templates = rows.reduce((acc, row) => {
-          acc[row.name] = { id: row.id, ...JSON.parse(row.fields) };
-          return acc;
-        }, {});
-        resolve(templates);
-      }
-    });
-  });
-});
-
-ipcMain.handle('save-template', async (event, name, template) => {
-  const fields = JSON.stringify(template);
-  return new Promise((resolve, reject) => {
-    // Use INSERT OR REPLACE to either create a new template or update an existing one based on the unique name
-    const sql = `INSERT INTO inspection_templates (name, fields) VALUES (?, ?)
-                 ON CONFLICT(name) DO UPDATE SET fields=excluded.fields`;
-    db.run(sql, [name, fields], function (err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ id: this.lastID });
-      }
-    });
-  });
-});
-
-ipcMain.handle('delete-template', async (event, id) => {
-  return new Promise((resolve, reject) => {
-    db.run('DELETE FROM inspection_templates WHERE id = ?', [id], function (err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ changes: this.changes });
-      }
-    });
-  });
-});
+// Legacy IPC handlers have been removed for security
+// All database operations now use secure-db-operation
 
 ipcMain.handle('backup-database', async () => {
   const dbPath = path.join(app.getPath('userData'), 'database.db');

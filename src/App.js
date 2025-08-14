@@ -14,9 +14,19 @@ import Scheduler from './components/Scheduler';
 import ReportGenerator from './components/ReportGenerator';
 import ComplianceManager from './components/ComplianceManager';
 import Settings from './components/Settings';
+import WorkOrders from './components/WorkOrders';
+import PreventiveMaintenance from './components/PreventiveMaintenance';
+import Deficiencies from './components/Deficiencies';
+import LoadTests from './components/LoadTests';
+import Calibrations from './components/Calibrations';
+import Credentials from './components/Credentials';
+import Login from './components/Login';
+import UserHeader from './components/UserHeader';
+import { UserProvider, useUser } from './contexts/UserContext';
 import { useUIStore, useEquipmentStore, useInspectionStore } from './store';
 
-function App() {
+// Main authenticated application component
+function AuthenticatedApp() {
   // UI state from uiStore
   const view = useUIStore((state) => state.view);
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
@@ -88,29 +98,37 @@ function App() {
       <div className="main-content">
         <header className="App-header">
           <h1>JSG Inspections</h1>
-          <button
-            onClick={toggleDarkMode}
-            style={{
-              marginLeft: '1rem',
-              padding: '0.5rem 1rem',
-              borderRadius: '6px',
-              border: 'none',
-              background: darkMode ? '#ffe082' : '#23272f',
-              color: darkMode ? '#23272f' : '#ffe082',
-              cursor: 'pointer',
-              fontWeight: 600,
-              transition: 'background 0.2s, color 0.2s',
-            }}
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? 'Light Mode' : 'Dark Mode'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              onClick={toggleDarkMode}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: darkMode ? '#ffe082' : '#23272f',
+                color: darkMode ? '#23272f' : '#ffe082',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: 'background 0.2s, color 0.2s',
+              }}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <UserHeader />
+          </div>
         </header>
         <main>
           {view === 'dashboard' && <Dashboard />}
           {view === 'templateBuilder' && <TemplateBuilder />}
           {view === 'scheduler' && <Scheduler />}
           {view === 'reporting' && <ReportGenerator />}
+          {view === 'workOrders' && <WorkOrders />}
+          {view === 'preventiveMaintenance' && <PreventiveMaintenance />}
+          {view === 'deficiencies' && <Deficiencies />}
+          {view === 'loadTests' && <LoadTests />}
+          {view === 'calibrations' && <Calibrations />}
+          {view === 'credentials' && <Credentials />}
           {view === 'compliance' && <ComplianceManager />}
           {view === 'settings' && <Settings />}
           {view === 'equipment' && !inspectingEquipment && (
@@ -159,7 +177,7 @@ function App() {
                 <button onClick={handleCloseInspections}>Back to Equipment</button>
                 <button
                   onClick={async () => {
-                    const equipment = await window.api.get('SELECT * FROM equipment WHERE id = ?', [viewingInspectionsFor]);
+                    const equipment = await window.api.secureOperation('equipment', 'getById', { id: viewingInspectionsFor });
                     setAddingInspectionFor(equipment);
                   }}
                 >
@@ -174,6 +192,48 @@ function App() {
       </div>
     </div>
   );
+}
+
+// Main App component with authentication wrapper
+function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
+  );
+}
+
+// App content that handles authentication state
+function AppContent() {
+  const { isAuthenticated, isLoading } = useUser();
+  const darkMode = useUIStore((state) => state.darkMode);
+
+  if (isLoading) {
+    return (
+      <div className={`App${darkMode ? ' dark' : ''}`}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontSize: '1.2rem',
+          color: '#718096'
+        }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className={`App${darkMode ? ' dark' : ''}`}>
+        <Login />
+      </div>
+    );
+  }
+
+  return <AuthenticatedApp />;
 }
 
 export default App;

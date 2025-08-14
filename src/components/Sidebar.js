@@ -88,6 +88,84 @@ const Sidebar = React.memo(function Sidebar({ toggleSidebar, isSidebarOpen }) {
         <li>
           <button
             type="button"
+            onClick={() => setView('workOrders')}
+            className={view === 'workOrders' ? 'active' : ''}
+            aria-current={view === 'workOrders' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Work Orders">🔧</span>
+            <span>Work Orders</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('preventiveMaintenance')}
+            className={view === 'preventiveMaintenance' ? 'active' : ''}
+            aria-current={view === 'preventiveMaintenance' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Preventive Maintenance">🔄</span>
+            <span>Preventive Maintenance</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('deficiencies')}
+            className={view === 'deficiencies' ? 'active' : ''}
+            aria-current={view === 'deficiencies' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Deficiencies">⚠️</span>
+            <span>Deficiencies</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('loadTests')}
+            className={view === 'loadTests' ? 'active' : ''}
+            aria-current={view === 'loadTests' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Load Tests">🏋️</span>
+            <span>Load Tests</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('calibrations')}
+            className={view === 'calibrations' ? 'active' : ''}
+            aria-current={view === 'calibrations' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Calibrations">🎯</span>
+            <span>Calibrations</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => setView('credentials')}
+            className={view === 'credentials' ? 'active' : ''}
+            aria-current={view === 'credentials' ? 'page' : undefined}
+            tabIndex={0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5em', width: '100%', background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0, cursor: 'pointer' }}
+          >
+            <span role="img" aria-label="Credentials">🎓</span>
+            <span>Credentials</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
             onClick={() => setView('compliance')}
             className={view === 'compliance' ? 'active' : ''}
             aria-current={view === 'compliance' ? 'page' : undefined}

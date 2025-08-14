@@ -47,50 +47,45 @@ function AddEquipmentForm({ onEquipmentAdded }) {
       const { files, ...equipmentData } = formData;
       
       // First, add the equipment
-      const equipmentResult = await window.api.run(
-        'INSERT INTO equipment (equipment_id, type, manufacturer, model, serial_number, capacity, installation_date, location, status, qr_code_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        Object.values(equipmentData)
-      );
-
-      if (window.api.isError(equipmentResult)) {
-        return equipmentResult;
-      }
+      const equipmentResult = await window.api.equipment.create({
+        equipmentId: equipmentData.equipmentId,
+        type: equipmentData.type,
+        manufacturer: equipmentData.manufacturer,
+        model: equipmentData.model,
+        serialNumber: equipmentData.serialNumber,
+        capacity: equipmentData.capacity,
+        installationDate: equipmentData.installationDate,
+        location: equipmentData.location,
+        status: equipmentData.status,
+        qrCodeData: equipmentData.qrCodeData
+      });
 
       // Then add documents with idempotent checks
-      const equipmentId = equipmentResult.data.lastID;
+      const equipmentId = equipmentResult.lastID;
       const documentResults = [];
 
       for (const file of files) {
         const checkExisting = async () => {
-          return await window.api.get(
-            'SELECT id FROM documents WHERE equipment_id = ? AND file_name = ?',
-            [equipmentId, file.name]
-          );
+          return await window.api.documents.checkExisting(equipmentId, file.name);
         };
 
         const addDocument = async () => {
-          return await window.api.run(
-            'INSERT INTO documents (equipment_id, file_name, file_path) VALUES (?, ?, ?)',
-            [equipmentId, file.name, file.path]
-          );
+          // For now, we'll use the file path directly since we don't have document import yet
+          return await window.api.documents.create({
+            equipmentId: equipmentId,
+            fileName: file.name,
+            filePath: file.path || file.name,
+            hash: 'placeholder', // TODO: Calculate actual hash when document import is implemented
+            size: file.size || 0
+          });
         };
 
         const documentResult = await makeIdempotent(checkExisting, addDocument);
         documentResults.push(documentResult);
       }
 
-      // Check if any document operations failed
-      const failedDocuments = documentResults.filter(result => window.api.isError(result));
-      if (failedDocuments.length > 0) {
-        return {
-          success: false,
-          error: {
-            message: `Equipment added but ${failedDocuments.length} document(s) failed to link`,
-            partialSuccess: true,
-            equipmentId
-          }
-        };
-      }
+      // Check if any document operations failed - simplified since secure operations throw errors
+      // instead of returning error objects
 
       return { success: true, data: { equipmentId, documentsAdded: documentResults.length } };
     };

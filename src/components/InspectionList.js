@@ -8,7 +8,7 @@ function InspectionList() {
 
   useEffect(() => {
     if (viewingInspectionsFor) {
-      window.api.all('SELECT * FROM inspections WHERE equipment_id = ?', [viewingInspectionsFor]).then(setInspections);
+      window.api.inspections.getByEquipmentId(viewingInspectionsFor).then(setInspections);
     }
   }, [viewingInspectionsFor]);
 

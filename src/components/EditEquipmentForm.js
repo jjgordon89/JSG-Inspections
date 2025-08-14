@@ -29,16 +29,26 @@ function EditEquipmentForm({ equipment, onEquipmentUpdated, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await window.api.run(
-      'UPDATE equipment SET manufacturer = ?, model = ?, serial_number = ?, capacity = ?, installation_date = ?, location = ?, status = ? WHERE id = ?',
-      [manufacturer, model, serialNumber, capacity, installationDate, location, status, equipment.id]
-    );
+    
+    await window.api.equipment.update({
+      manufacturer,
+      model,
+      serialNumber,
+      capacity,
+      installationDate,
+      location,
+      status,
+      id: equipment.id
+    });
 
     for (const file of files) {
-      await window.api.run(
-        'INSERT INTO documents (equipment_id, file_name, file_path) VALUES (?, ?, ?)',
-        [equipment.id, file.name, file.path]
-      );
+      await window.api.documents.create({
+        equipmentId: equipment.id,
+        fileName: file.name,
+        filePath: file.path || file.name,
+        hash: 'placeholder', // TODO: Calculate actual hash when document import is implemented
+        size: file.size || 0
+      });
     }
 
     onEquipmentUpdated();

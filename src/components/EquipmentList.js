@@ -10,10 +10,28 @@ function EquipmentList({ onViewInspections, showToast }) {
   const [itemsPerPage] = useState(5);
   const [search, setSearch] = useState('');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchEquipment = () => {
-    window.api.all('SELECT * FROM equipment').then(setEquipment);
-  };
+const fetchEquipment = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    const equipmentData = await window.api.secure.equipment.getAll();
+    
+    if (Array.isArray(equipmentData)) {
+      setEquipment(equipmentData);
+    } else {
+      throw new Error('Invalid equipment data received');
+    }
+  } catch (error) {
+    console.error('Failed to fetch equipment:', error);
+    setError(error.message || 'Failed to load equipment');
+    if (showToast) showToast('Failed to load equipment');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Get state and actions from equipmentStore
   const refresh = useEquipmentStore((state) => state.refresh);
@@ -25,18 +43,28 @@ function EquipmentList({ onViewInspections, showToast }) {
   }, [refresh]); // Re-fetch when refresh state changes
 
   const handleDelete = async (id) => {
-    await window.api.run('DELETE FROM equipment WHERE id = ?', [id]);
-    fetchEquipment();
-    if (showToast) showToast('Equipment deleted');
+    try {
+      await window.api.equipment.delete(id);
+      fetchEquipment();
+      if (showToast) showToast('Equipment deleted');
+    } catch (error) {
+      console.error('Failed to delete equipment:', error);
+      if (showToast) showToast('Failed to delete equipment');
+    }
   };
 
   const handleScan = async (scannedData) => {
     if (scannedData) {
-      const equipment = await window.api.get('SELECT * FROM equipment WHERE equipment_id = ?', [scannedData]);
-      if (equipment) {
-        setInspectingEquipment(equipment);
-      } else {
-        alert('Equipment not found');
+      try {
+        const equipment = await window.api.equipment.getByEquipmentId(scannedData);
+        if (equipment) {
+          setInspectingEquipment(equipment);
+        } else {
+          alert('Equipment not found');
+        }
+      } catch (error) {
+        console.error('Failed to find equipment:', error);
+        alert('Error searching for equipment');
       }
     }
     setIsScannerOpen(false);
@@ -47,13 +75,74 @@ function EquipmentList({ onViewInspections, showToast }) {
   // Filter equipment by search term (manufacturer or model)
   const filteredEquipment = equipment.filter(
     (item) =>
-      item.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
-      item.model.toLowerCase().includes(search.toLowerCase())
+      ((item.manufacturer || '') || '').toLowerCase().includes(search.toLowerCase()) ||
+      ((item.model || '') || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const currentItems = filteredEquipment.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Loading state
+  if (loading) {
+    return (
+      <section className="equipment-list-section">
+        <div className="toolbar">
+          <input
+            type="text"
+            placeholder="Search by manufacturer or model..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="equipment-search-input"
+            aria-label="Search equipment"
+            disabled
+          />
+          <button className="scan-button" disabled>Scan Equipment QR</button>
+        </div>
+        <div className="equipment-card-grid">
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
+            <div className="loading-spinner">Loading equipment...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="equipment-list-section">
+        <div className="toolbar">
+          <input
+            type="text"
+            placeholder="Search by manufacturer or model..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="equipment-search-input"
+            aria-label="Search equipment"
+            disabled
+          />
+          <button className="scan-button" disabled>Scan Equipment QR</button>
+        </div>
+        <div className="equipment-card-grid">
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
+            <div className="error-message">
+              <p>Error loading equipment: {error}</p>
+              <button onClick={fetchEquipment} className="retry-button">
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="equipment-list-section">
@@ -74,7 +163,10 @@ function EquipmentList({ onViewInspections, showToast }) {
       <div className="equipment-card-grid">
         {currentItems.length === 0 ? (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#888' }}>
-            No equipment found.
+            {filteredEquipment.length === 0 && equipment.length > 0 
+              ? 'No equipment matches your search criteria.'
+              : 'No equipment found.'
+            }
           </div>
         ) : (
           currentItems.map((item) => (

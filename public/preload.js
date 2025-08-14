@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const isDev = require('electron-is-dev');
 
 /**
  * Normalizes error objects to a consistent shape for the renderer process
@@ -73,10 +74,27 @@ function createIPCWrapper(channel, operation, isRetryable = false) {
       if (result && result.success === false) {
         const errorObj = normalizeError(result.error || result, operation);
         logError(errorObj);
-        return errorObj;
+        
+        // For retryable operations, add retry metadata
+        if (isRetryable) {
+          errorObj.error.retryable = true;
+          errorObj.error.retryAfter = 1000; // 1 second
+        }
+        
+        // Throw the error instead of returning it
+        const error = new Error(errorObj.error.message);
+        error.code = errorObj.error.code;
+        error.operation = errorObj.error.operation;
+        error.timestamp = errorObj.error.timestamp;
+        if (isRetryable) {
+          error.retryable = true;
+          error.retryAfter = 1000;
+        }
+        throw error;
       }
       
-      return { success: true, data: result };
+      // Return data directly (not wrapped in success object)
+      return result;
     } catch (error) {
       const errorObj = normalizeError(error, operation);
       logError(errorObj);
@@ -87,27 +105,28 @@ function createIPCWrapper(channel, operation, isRetryable = false) {
         errorObj.error.retryAfter = 1000; // 1 second
       }
       
-      return errorObj;
+      // Throw the error instead of returning it
+      const newError = new Error(errorObj.error.message);
+      newError.code = errorObj.error.code;
+      newError.operation = errorObj.error.operation;
+      newError.timestamp = errorObj.error.timestamp;
+      if (isRetryable) {
+        newError.retryable = true;
+        newError.retryAfter = 1000;
+      }
+      throw newError;
     }
   };
 }
 
-contextBridge.exposeInMainWorld('api', {
+// Build the API object conditionally
+const apiObject = {
   // Secure database operations
   secureOperation: createIPCWrapper('secure-db-operation', 'Secure Database Operation', true),
   
   // File operations with path validation
   openFilePath: createIPCWrapper('open-file-path', 'Open File Path'),
-  
-  // Legacy database operations (deprecated)
-  run: createIPCWrapper('db-run', 'Database Write Operation'),
-  get: createIPCWrapper('db-get', 'Database Read Operation', true),
-  all: createIPCWrapper('db-all', 'Database Query Operation', true),
-  
-  // Template operations with error handling
-  getTemplates: createIPCWrapper('get-templates', 'Get Templates', true),
-  saveTemplate: createIPCWrapper('save-template', 'Save Template'),
-  deleteTemplate: createIPCWrapper('delete-template', 'Delete Template'),
+  importDocument: createIPCWrapper('import-document', 'Import Document'),
   
   // Backup/restore operations with error handling
   backupDatabase: createIPCWrapper('backup-database', 'Database Backup'),
@@ -139,7 +158,8 @@ contextBridge.exposeInMainWorld('api', {
     getCount: () => window.api.secureOperation('inspections', 'getCount', {}),
     getPerMonth: () => window.api.secureOperation('inspections', 'getPerMonth', {}),
     getLastInspectionByEquipment: () => window.api.secureOperation('inspections', 'getLastInspectionByEquipment', {}),
-    getRecentFailures: () => window.api.secureOperation('inspections', 'getRecentFailures', {})
+    getRecentFailures: () => window.api.secureOperation('inspections', 'getRecentFailures', {}),
+    getOverdue: () => window.api.secureOperation('inspections', 'getOverdue', {})
   },
   
   documents: {
@@ -154,6 +174,7 @@ contextBridge.exposeInMainWorld('api', {
     getTodayAndLater: (today) => window.api.secureOperation('scheduledInspections', 'getTodayAndLater', { today }),
     create: (params) => window.api.secureOperation('scheduledInspections', 'create', params),
     update: (params) => window.api.secureOperation('scheduledInspections', 'update', params),
+    updateStatus: (id, status) => window.api.secureOperation('scheduledInspections', 'updateStatus', { id, status }),
     delete: (id) => window.api.secureOperation('scheduledInspections', 'delete', { id })
   },
   
@@ -171,5 +192,141 @@ contextBridge.exposeInMainWorld('api', {
     getAll: () => window.api.secureOperation('templates', 'getAll', {}),
     save: (name, fields) => window.api.secureOperation('templates', 'save', { name, fields }),
     delete: (id) => window.api.secureOperation('templates', 'delete', { id })
+  },
+  
+  // Phase 2 - Inspection Items operations
+  inspectionItems: {
+    getByInspectionId: (inspectionId) => window.api.secureOperation('inspectionItems', 'getByInspectionId', { inspectionId }),
+    create: (params) => window.api.secureOperation('inspectionItems', 'create', params),
+    update: (params) => window.api.secureOperation('inspectionItems', 'update', params),
+    delete: (id) => window.api.secureOperation('inspectionItems', 'delete', { id }),
+    getCriticalFailures: () => window.api.secureOperation('inspectionItems', 'getCriticalFailures', {})
+  },
+  
+  // Phase 2 - Deficiencies operations
+  deficiencies: {
+    getAll: () => window.api.secureOperation('deficiencies', 'getAll', {}),
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('deficiencies', 'getByEquipmentId', { equipmentId }),
+    getByStatus: (status) => window.api.secureOperation('deficiencies', 'getByStatus', { status }),
+    create: (params) => window.api.secureOperation('deficiencies', 'create', params),
+    update: (params) => window.api.secureOperation('deficiencies', 'update', params),
+    close: (id, verificationSignature) => window.api.secureOperation('deficiencies', 'close', { id, verificationSignature }),
+    getOpenCritical: () => window.api.secureOperation('deficiencies', 'getOpenCritical', {}),
+    getOverdue: () => window.api.secureOperation('deficiencies', 'getOverdue', {}),
+    createFromInspectionItem: (params) => window.api.secureOperation('deficiencies', 'createFromInspectionItem', params),
+    linkToWorkOrder: (id, workOrderId) => window.api.secureOperation('deficiencies', 'linkToWorkOrder', { id, workOrderId })
+  },
+  
+  // Phase 2 - Signatures operations
+  signatures: {
+    getByEntity: (entityType, entityId) => window.api.secureOperation('signatures', 'getByEntity', { entityType, entityId }),
+    create: (params) => window.api.secureOperation('signatures', 'create', params),
+    delete: (id) => window.api.secureOperation('signatures', 'delete', { id })
+  },
+
+  // P2 - Work Orders operations
+  workOrders: {
+    getAll: () => window.api.secureOperation('workOrders', 'getAll', {}),
+    getByStatus: (status) => window.api.secureOperation('workOrders', 'getByStatus', { status }),
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('workOrders', 'getByEquipmentId', { equipmentId }),
+    create: (params) => window.api.secureOperation('workOrders', 'create', params),
+    update: (params) => window.api.secureOperation('workOrders', 'update', params),
+    updateStatus: (params) => window.api.secureOperation('workOrders', 'updateStatus', params),
+    complete: (params) => window.api.secureOperation('workOrders', 'complete', params),
+    getDueToday: () => window.api.secureOperation('workOrders', 'getDueToday', {}),
+    getOverdue: () => window.api.secureOperation('workOrders', 'getOverdue', {})
+  },
+
+  // P2 - PM Templates operations
+  pmTemplates: {
+    getAll: () => window.api.secureOperation('pmTemplates', 'getAll', {}),
+    getByEquipmentType: (equipmentType) => window.api.secureOperation('pmTemplates', 'getByEquipmentType', { equipmentType }),
+    create: (params) => window.api.secureOperation('pmTemplates', 'create', params),
+    update: (params) => window.api.secureOperation('pmTemplates', 'update', params),
+    deactivate: (id) => window.api.secureOperation('pmTemplates', 'deactivate', { id })
+  },
+
+  // P2 - PM Schedules operations
+  pmSchedules: {
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('pmSchedules', 'getByEquipmentId', { equipmentId }),
+    getDue: (dueDate) => window.api.secureOperation('pmSchedules', 'getDue', { dueDate }),
+    create: (params) => window.api.secureOperation('pmSchedules', 'create', params),
+    updateDue: (params) => window.api.secureOperation('pmSchedules', 'updateDue', params),
+    getTotal: () => window.api.secureOperation('pmSchedules', 'getTotal', {}),
+    getOverdue: () => window.api.secureOperation('pmSchedules', 'getOverdue', {})
+  },
+
+  // P2 - Load Tests operations
+  loadTests: {
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('loadTests', 'getByEquipmentId', { equipmentId }),
+    getDue: (dueDate) => window.api.secureOperation('loadTests', 'getDue', { dueDate }),
+    create: (params) => window.api.secureOperation('loadTests', 'create', params),
+    getLastByEquipment: () => window.api.secureOperation('loadTests', 'getLastByEquipment', {}),
+    getTotal: () => window.api.secureOperation('loadTests', 'getTotal', {}),
+    getOverdue: () => window.api.secureOperation('loadTests', 'getOverdue', {})
+  },
+
+  // P2 - Calibrations operations
+  calibrations: {
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('calibrations', 'getByEquipmentId', { equipmentId }),
+    getDue: (dueDate) => window.api.secureOperation('calibrations', 'getDue', { dueDate }),
+    create: (params) => window.api.secureOperation('calibrations', 'create', params),
+    getTotal: () => window.api.secureOperation('calibrations', 'getTotal', {}),
+    getOverdue: () => window.api.secureOperation('calibrations', 'getOverdue', {})
+  },
+
+  // P2 - Credentials operations
+  credentials: {
+    getAll: () => window.api.secureOperation('credentials', 'getAll', {}),
+    getByPerson: (personName) => window.api.secureOperation('credentials', 'getByPerson', { personName }),
+    getExpiring: (expirationDate) => window.api.secureOperation('credentials', 'getExpiring', { expirationDate }),
+    create: (params) => window.api.secureOperation('credentials', 'create', params),
+    updateStatus: (id, status) => window.api.secureOperation('credentials', 'updateStatus', { id, status }),
+    getTotal: () => window.api.secureOperation('credentials', 'getTotal', {})
+  },
+
+  // P2 - Users operations
+  users: {
+    getAll: () => window.api.secureOperation('users', 'getAll', {}),
+    getByUsername: (username) => window.api.secureOperation('users', 'getByUsername', { username }),
+    create: (params) => window.api.secureOperation('users', 'create', params),
+    updateLastLogin: (id) => window.api.secureOperation('users', 'updateLastLogin', { id })
+  },
+
+  // P2 - Audit Log operations
+  auditLog: {
+    create: (params) => window.api.secureOperation('auditLog', 'create', params),
+    getByEntity: (entityType, entityId) => window.api.secureOperation('auditLog', 'getByEntity', { entityType, entityId }),
+    getRecent: (limit) => window.api.secureOperation('auditLog', 'getRecent', { limit })
+  },
+
+  // P2 - Certificates operations
+  certificates: {
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('certificates', 'getByEquipmentId', { equipmentId }),
+    getByCertificateNumber: (certificateNumber) => window.api.secureOperation('certificates', 'getByCertificateNumber', { certificateNumber }),
+    getExpiring: (expirationDate) => window.api.secureOperation('certificates', 'getExpiring', { expirationDate }),
+    create: (params) => window.api.secureOperation('certificates', 'create', params),
+    updateStatus: (id, status) => window.api.secureOperation('certificates', 'updateStatus', { id, status }),
+    getTotal: () => window.api.secureOperation('certificates', 'getTotal', {})
+  },
+
+  // P2 - Meter Readings operations
+  meterReadings: {
+    getByEquipmentId: (equipmentId) => window.api.secureOperation('meterReadings', 'getByEquipmentId', { equipmentId }),
+    getLatestByEquipment: () => window.api.secureOperation('meterReadings', 'getLatestByEquipment', {}),
+    create: (params) => window.api.secureOperation('meterReadings', 'create', params)
+  },
+
+  // P2 - Template Items operations
+  templateItems: {
+    getByTemplateId: (templateId) => window.api.secureOperation('templateItems', 'getByTemplateId', { templateId }),
+    create: (params) => window.api.secureOperation('templateItems', 'create', params),
+    update: (params) => window.api.secureOperation('templateItems', 'update', params),
+    delete: (id) => window.api.secureOperation('templateItems', 'delete', { id })
   }
-});
+};
+
+// Legacy operations have been removed for security
+// All database operations now use secure operations through window.api.secureOperation
+
+contextBridge.exposeInMainWorld('api', apiObject);

@@ -5,12 +5,15 @@
   "main": "public/electron.js",
   "homepage": "./",
   "scripts": {
+    "electron": "electron .",
     "start": "npm run build && electron .",
     "dev": "concurrently -k \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron .\"",
     "react-start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "pack": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish=never"
   },
   "keywords": [],
   "author": "",

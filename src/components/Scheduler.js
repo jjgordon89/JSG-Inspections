@@ -15,13 +15,21 @@ function Scheduler() {
   }, []);
 
   const fetchScheduledInspections = async () => {
-    const inspections = await window.api.all('SELECT si.*, e.equipment_id as equipmentIdentifier FROM scheduled_inspections si JOIN equipment e ON si.equipment_id = e.id ORDER BY si.scheduled_date');
-    setScheduledInspections(inspections);
+    try {
+      const inspections = await window.api.secureOperation('scheduledInspections', 'getAll');
+      setScheduledInspections(inspections);
+    } catch (error) {
+      console.error('Error fetching scheduled inspections:', error);
+    }
   };
 
   const fetchEquipment = async () => {
-    const equipmentList = await window.api.all('SELECT * FROM equipment');
-    setEquipment(equipmentList);
+    try {
+      const equipmentList = await window.api.secureOperation('equipment', 'getAll');
+      setEquipment(equipmentList);
+    } catch (error) {
+      console.error('Error fetching equipment:', error);
+    }
   };
 
   const resetForm = () => {
@@ -38,22 +46,31 @@ function Scheduler() {
       return;
     }
 
-    if (editingInspection) {
-      // Update existing inspection
-      await window.api.run(
-        'UPDATE scheduled_inspections SET equipment_id = ?, scheduled_date = ?, assigned_inspector = ? WHERE id = ?',
-        [selectedEquipment, scheduledDate, assignedInspector, editingInspection.id]
-      );
-    } else {
-      // Add new inspection
-      await window.api.run(
-        'INSERT INTO scheduled_inspections (equipment_id, scheduled_date, assigned_inspector, status) VALUES (?, ?, ?, ?)',
-        [selectedEquipment, scheduledDate, assignedInspector, 'scheduled']
-      );
-    }
+    try {
+      if (editingInspection) {
+        // Update existing inspection
+        await window.api.secureOperation('scheduledInspections', 'update', {
+          equipmentId: parseInt(selectedEquipment),
+          scheduledDate,
+          assignedInspector,
+          id: editingInspection.id
+        });
+      } else {
+        // Add new inspection
+        await window.api.secureOperation('scheduledInspections', 'create', {
+          equipmentId: parseInt(selectedEquipment),
+          scheduledDate,
+          assignedInspector,
+          status: 'scheduled'
+        });
+      }
 
-    fetchScheduledInspections();
-    resetForm();
+      fetchScheduledInspections();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving scheduled inspection:', error);
+      alert('Failed to save scheduled inspection. Please try again.');
+    }
   };
 
   const handleEditInspection = (inspection) => {
@@ -65,8 +82,41 @@ function Scheduler() {
 
   const handleDeleteInspection = async (id) => {
     if (window.confirm('Are you sure you want to delete this scheduled inspection?')) {
-      await window.api.run('DELETE FROM scheduled_inspections WHERE id = ?', [id]);
+      try {
+        await window.api.secureOperation('scheduledInspections', 'delete', { id });
+        fetchScheduledInspections();
+      } catch (error) {
+        console.error('Error deleting scheduled inspection:', error);
+        alert('Failed to delete scheduled inspection. Please try again.');
+      }
+    }
+  };
+
+  const handleStatusChange = async (inspectionId, newStatus) => {
+    try {
+      await window.api.secureOperation('scheduledInspections', 'updateStatus', {
+        id: inspectionId,
+        status: newStatus
+      });
       fetchScheduledInspections();
+    } catch (error) {
+      console.error('Error updating inspection status:', error);
+      alert('Failed to update inspection status. Please try again.');
+    }
+  };
+
+  const startInspection = (inspection) => {
+    // This would typically navigate to the inspection form
+    // For now, we'll just update the status to in_progress
+    handleStatusChange(inspection.id, 'in_progress');
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'scheduled': return '#007bff';
+      case 'in_progress': return '#ffc107';
+      case 'completed': return '#28a745';
+      default: return '#6c757d';
     }
   };
 
@@ -103,21 +153,60 @@ function Scheduler() {
       </form>
 
       <div className="scheduled-inspections-list">
-        <h3>Upcoming Inspections</h3>
-        <ul>
-          {scheduledInspections.map((inspection) => (
-            <li key={inspection.id}>
-              <span>Equipment: {inspection.equipmentIdentifier}</span>
-              <span>Date: {inspection.scheduled_date}</span>
-              <span>Inspector: {inspection.assigned_inspector || 'N/A'}</span>
-              <span>Status: {inspection.status}</span>
-              <div className="scheduler-item-buttons">
-                <button onClick={() => handleEditInspection(inspection)}>Edit</button>
-                <button onClick={() => handleDeleteInspection(inspection.id)} className="delete-button">Delete</button>
+        <h3>Scheduled Inspections</h3>
+        {scheduledInspections.length === 0 ? (
+          <p>No scheduled inspections found.</p>
+        ) : (
+          <div className="inspections-grid">
+            {scheduledInspections.map((inspection) => (
+              <div key={inspection.id} className="inspection-card">
+                <div className="inspection-header">
+                  <h4>{inspection.equipmentIdentifier}</h4>
+                  <span 
+                    className="status-badge" 
+                    style={{ backgroundColor: getStatusColor(inspection.status) }}
+                  >
+                    {inspection.status.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <div className="inspection-details">
+                  <p><strong>Date:</strong> {new Date(inspection.scheduled_date).toLocaleDateString()}</p>
+                  <p><strong>Inspector:</strong> {inspection.assigned_inspector || 'Unassigned'}</p>
+                </div>
+                <div className="inspection-actions">
+                  {inspection.status === 'scheduled' && (
+                    <button 
+                      onClick={() => startInspection(inspection)}
+                      className="start-btn"
+                    >
+                      Start Inspection
+                    </button>
+                  )}
+                  {inspection.status === 'in_progress' && (
+                    <button 
+                      onClick={() => handleStatusChange(inspection.id, 'completed')}
+                      className="complete-btn"
+                    >
+                      Mark Complete
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleEditInspection(inspection)}
+                    className="edit-btn"
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteInspection(inspection.id)} 
+                    className="delete-btn"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

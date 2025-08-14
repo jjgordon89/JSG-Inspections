@@ -19,12 +19,12 @@ function ComplianceManager() {
   }, []);
 
   const fetchStandards = async () => {
-    const standardList = await window.api.all('SELECT * FROM compliance_standards');
+    const standardList = await window.api.compliance.getAllStandards();
     setStandards(standardList);
   };
 
   const fetchEquipmentTypes = async () => {
-    const types = await window.api.all('SELECT DISTINCT type FROM equipment');
+    const types = await window.api.equipment.getDistinctTypes();
     setEquipmentTypes(types.map(t => t.type));
   };
 
@@ -34,10 +34,11 @@ function ComplianceManager() {
       alert('Please enter a standard name.');
       return;
     }
-    await window.api.run(
-      'INSERT INTO compliance_standards (name, description, authority) VALUES (?, ?, ?)',
-      [newStandardName, newStandardDescription, newStandardAuthority]
-    );
+    await window.api.compliance.createStandard({
+      name: newStandardName,
+      description: newStandardDescription,
+      authority: newStandardAuthority
+    });
     fetchStandards();
     setNewStandardName('');
     setNewStandardDescription('');
@@ -53,12 +54,7 @@ function ComplianceManager() {
   }, [selectedEquipmentType]);
 
   const fetchAssignedStandards = async (equipmentType) => {
-    const assigned = await window.api.all(
-      `SELECT cs.id, cs.name FROM compliance_standards cs
-       JOIN equipment_type_compliance etc ON cs.id = etc.standard_id
-       WHERE etc.equipment_type = ?`,
-      [equipmentType]
-    );
+    const assigned = await window.api.compliance.getAssignedStandards(equipmentType);
     setAssignedStandards(assigned);
   };
 
@@ -68,20 +64,14 @@ function ComplianceManager() {
       alert('Please select an equipment type and a standard.');
       return;
     }
-    await window.api.run(
-      'INSERT OR IGNORE INTO equipment_type_compliance (equipment_type, standard_id) VALUES (?, ?)',
-      [selectedEquipmentType, selectedStandard]
-    );
+    await window.api.compliance.assignStandard(selectedEquipmentType, selectedStandard);
     fetchAssignedStandards(selectedEquipmentType);
     alert('Standard assigned successfully.');
   };
 
   const handleUnassignStandard = async (standardId) => {
     if (!selectedEquipmentType) return;
-    await window.api.run(
-      'DELETE FROM equipment_type_compliance WHERE equipment_type = ? AND standard_id = ?',
-      [selectedEquipmentType, standardId]
-    );
+    await window.api.compliance.unassignStandard(selectedEquipmentType, standardId);
     fetchAssignedStandards(selectedEquipmentType);
   };
 
@@ -90,7 +80,7 @@ function ComplianceManager() {
       // In a real app, you might want to handle assignments more gracefully.
       // For now, we'll just delete the standard. The assignments will be orphaned but won't cause errors.
       // A better approach would be to use a transaction to delete assignments first.
-      await window.api.run('DELETE FROM compliance_standards WHERE id = ?', [id]);
+      await window.api.compliance.deleteStandard(id);
       fetchStandards();
     }
   };
@@ -98,13 +88,9 @@ function ComplianceManager() {
   const calculateComplianceStatus = async () => {
     setIsLoadingCompliance(true);
 
-    const equipment = await window.api.all('SELECT * FROM equipment');
-    const requirements = await window.api.all(`
-      SELECT etc.equipment_type, cs.name as standard_name, cs.id as standard_id
-      FROM equipment_type_compliance etc
-      JOIN compliance_standards cs ON etc.standard_id = cs.id
-    `);
-    const inspections = await window.api.all('SELECT equipment_id, MAX(inspection_date) as last_inspection_date FROM inspections GROUP BY equipment_id');
+    const equipment = await window.api.equipment.getAll();
+    const requirements = await window.api.compliance.getComplianceReport();
+    const inspections = await window.api.inspections.getLastInspectionByEquipment();
 
     const inspectionsMap = inspections.reduce((acc, insp) => {
       acc[insp.equipment_id] = insp.last_inspection_date;

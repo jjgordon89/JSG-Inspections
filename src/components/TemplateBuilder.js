@@ -88,7 +88,12 @@ function TemplateBuilder() {
   useEffect(() => {
     async function fetchTemplates() {
       try {
-        const templates = await window.api.getTemplates();
+        const templateList = await window.api.templates.getAll();
+        // Transform the array of templates into an object keyed by template name
+        const templates = templateList.reduce((acc, template) => {
+          acc[template.name] = { id: template.id, ...JSON.parse(template.fields) };
+          return acc;
+        }, {});
         dispatch({ type: "SET_TEMPLATES", payload: templates });
       } catch (error) {
         console.error("Failed to fetch templates:", error);
@@ -104,7 +109,7 @@ function TemplateBuilder() {
     }
     const newTemplate = { sections: state.sections };
     try {
-      await window.api.saveTemplate(state.newTemplateName, newTemplate);
+      await window.api.templates.save(state.newTemplateName, JSON.stringify(newTemplate));
       dispatch({ type: "SET_TEMPLATES", payload: { ...state.templates, [state.newTemplateName]: newTemplate } });
       alert("Template saved successfully!");
     } catch (error) {
@@ -125,7 +130,7 @@ function TemplateBuilder() {
     }
 
     try {
-      await window.api.deleteTemplate(templateToDelete.id);
+      await window.api.templates.delete(templateToDelete.id);
       const newTemplates = { ...state.templates };
       delete newTemplates[state.selectedTemplate];
       dispatch({ type: "SET_TEMPLATES", payload: newTemplates });

@@ -55,6 +55,14 @@ class MigrationManager {
     try {
       fs.copyFileSync(backupPath, this.dbPath);
       this.log(`Database rolled back from: ${backupPath}`);
+      
+      // After rollback, reinitialize DB connection or relaunch app
+      this.log('Initiating app relaunch after rollback to avoid closed DB state');
+      setTimeout(() => {
+        this.app.relaunch();
+        this.app.exit();
+      }, 1000); // Give time for log to be written
+      
     } catch (err) {
       this.log(`Rollback failed: ${err.message}`);
       throw new Error(`Rollback failed: ${err.message}`);
